@@ -2,6 +2,9 @@
 # 丢失或换机器时运行 datasets/download_datasets.py 可重新获取。
 datasets/**/*.avi
 
+# 脚本下载的中间缓存，可由 build_ucy_metric.py / download_datasets.py 重建
+datasets/_raw/
+
 # Python
 __pycache__/
 *.py[cod]
