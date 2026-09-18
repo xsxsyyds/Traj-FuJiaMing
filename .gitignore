@@ -5,6 +5,11 @@ datasets/**/*.avi
 # 脚本下载的中间缓存，可由 build_ucy_metric.py / download_datasets.py 重建
 datasets/_raw/
 
+# 图表只输出高清 PNG，不再提交 PDF（约定 2026-09-18）。
+# 仅限图表目录，不影响存放报告等其他 PDF。
+**/figures/*.pdf
+**/results/*.pdf
+
 # Python
 __pycache__/
 *.py[cod]

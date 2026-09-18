@@ -151,6 +151,13 @@ def progress(n: int) -> np.ndarray:
 # 绘图工具
 # ------------------------------------------------------------------
 
+def _save(fig, outdir: Path, stem: str, dpi: int) -> None:
+    """只输出高清 PNG（不再输出 PDF）。"""
+    p = outdir / f"{stem}.png"
+    fig.savefig(p, dpi=dpi, facecolor="white")
+    print(f"[写出] {p.relative_to(ROOT)}")
+
+
 def style(ax, xlabel="x [m]", ylabel="y [m]", equal=True) -> None:
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
@@ -221,10 +228,7 @@ def fig_raw(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     cb.outline.set_linewidth(0.5)
     cb.ax.tick_params(labelsize=8)
 
-    for ext in ("png", "pdf"):
-        p = outdir / f"fig1_trajectories_raw.{ext}"
-        fig.savefig(p, dpi=dpi, facecolor="white")
-        print(f"[写出] {p.relative_to(ROOT)}")
+    _save(fig, outdir, "fig1_trajectories_raw", dpi)
     plt.close(fig)
 
 
@@ -309,10 +313,7 @@ def fig_aligned(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     cb.outline.set_linewidth(0.5)
     cb.ax.tick_params(labelsize=8)
 
-    for ext in ("png", "pdf"):
-        p = outdir / f"fig2_trajectories_aligned.{ext}"
-        fig.savefig(p, dpi=dpi, facecolor="white")
-        print(f"[写出] {p.relative_to(ROOT)}")
+    _save(fig, outdir, "fig2_trajectories_aligned", dpi)
     plt.close(fig)
 
 
@@ -374,10 +375,7 @@ def fig_stats(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     cb.outline.set_linewidth(0.5)
     cb.ax.tick_params(labelsize=8)
 
-    for ext in ("png", "pdf"):
-        p = outdir / f"fig3_geometry_stats.{ext}"
-        fig.savefig(p, dpi=dpi, facecolor="white")
-        print(f"[写出] {p.relative_to(ROOT)}")
+    _save(fig, outdir, "fig3_geometry_stats", dpi)
     plt.close(fig)
 
 
@@ -418,7 +416,7 @@ def main() -> int:
     ap.add_argument("--data", default=str(ROOT / "week02" / "data"
                                           / "circle-10m-64-1.txt"))
     ap.add_argument("--outdir", default=str(ROOT / "week02" / "results"))
-    ap.add_argument("--dpi", type=int, default=200)
+    ap.add_argument("--dpi", type=int, default=300, help="PNG 输出分辨率")
     args = ap.parse_args()
 
     outdir = Path(args.outdir)

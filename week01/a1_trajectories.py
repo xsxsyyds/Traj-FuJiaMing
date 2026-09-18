@@ -7,8 +7,8 @@
     python week01/a1_trajectories.py --scenes zara01 seq_eth
     python week01/a1_trajectories.py --color-by id   # 按行人编号着色
 
-产物写入 ``week01/figures/``：每个场景一张图，外加一张 5 场景总览。
-同时输出 PNG（预览）与 PDF（矢量，可直接用于报告）。
+产物写入 ``week01/figures/``：每个场景一张图，外加一张 5 场景总览，
+统一输出高清 PNG。
 """
 
 from __future__ import annotations
@@ -52,6 +52,13 @@ plt.rcParams.update({
 # ------------------------------------------------------------------
 # 绘图
 # ------------------------------------------------------------------
+
+def _save(fig, outdir: Path, stem: str, dpi: int) -> None:
+    """只输出高清 PNG（不再输出 PDF）。"""
+    p = outdir / f"{stem}.png"
+    fig.savefig(p, dpi=dpi, facecolor="white")
+    print(f"[写出] {p.relative_to(ROOT)}")
+
 
 def _style_axes(ax) -> None:
     for side in ("top", "right"):
@@ -162,10 +169,7 @@ def plot_overview(scenes: list[Scene], outdir: Path, color_by: str,
                  fontsize=12, color=TEXT, y=0.995)
     fig.tight_layout(rect=(0, 0, 1, 0.98))
 
-    for ext in ("png", "pdf"):
-        p = outdir / f"a1_overview.{ext}"
-        fig.savefig(p, dpi=dpi, facecolor="white")
-        print(f"[写出] {p.relative_to(ROOT)}")
+    _save(fig, outdir, "a1_overview", dpi)
     plt.close(fig)
 
 
@@ -181,7 +185,7 @@ def main() -> int:
     ap.add_argument("--color-by", default="uniform",
                     choices=["uniform", "id", "length"],
                     help="线条着色方式")
-    ap.add_argument("--dpi", type=int, default=200)
+    ap.add_argument("--dpi", type=int, default=300, help="PNG 输出分辨率")
     ap.add_argument("--no-overview", action="store_true")
     args = ap.parse_args()
 
@@ -193,10 +197,7 @@ def main() -> int:
     for sc in scenes:
         fig, ax = plt.subplots(figsize=_figsize_for(sc))
         plot_scene(ax, sc, color_by=args.color_by)
-        for ext in ("png", "pdf"):
-            p = outdir / f"a1_traj_{sc.name}.{ext}"
-            fig.savefig(p, dpi=args.dpi, facecolor="white")
-            print(f"[写出] {p.relative_to(ROOT)}")
+        _save(fig, outdir, f"a1_traj_{sc.name}", args.dpi)
         plt.close(fig)
 
     if not args.no_overview and len(scenes) > 1:

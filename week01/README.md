@@ -6,8 +6,8 @@
 
 | 文件 | 说明 |
 |---|---|
-| `figures/a1_overview.png` / `.pdf` | 5 个场景总览 + 规模统计表 |
-| `figures/a1_traj_<场景>.png` / `.pdf` | 各场景单独轨迹图 |
+| `figures/a1_overview.png` | 5 个场景总览 + 规模统计表 |
+| `figures/a1_traj_<场景>.png` | 各场景单独轨迹图 |
 | `a1_trajectories.py` | 绘图脚本 |
 
 复现：
