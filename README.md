@@ -16,6 +16,18 @@ week02/               圆环对趾：形成行为判断 → 建模 → 验证
 week03/ … week08/     后续每周一个目录
 ```
 
+### week02 目录
+
+```
+week02/
+├── circle_data.py        圆环数据读取与运动学量（共用模块）
+├── analyze_circle.py     轨迹可视化
+├── analyze_dynamics.py   速度与方向分析（帧率 25 fps）
+├── model/                社会力模型（三项力）与仿真、失效分析
+├── 作业.md               连贯段落版结论
+└── results/              fig1–fig8，全部高清 PNG
+```
+
 每周目录内放三样：图或视频、一段结论、代码。
 
 ---
@@ -41,8 +53,8 @@ week03/ … week08/     后续每周一个目录
 | 周 | 任务 | 状态 |
 |---|---|---|
 | week01 | A1 画轨迹 | ✅ 完成 → [week01/](week01/) |
-| week02 | 圆环对趾：形成行为判断 | ✅ 完成 |
-| week02 | 圆环对趾：模型主张 + 实现验证 | 进行中 |
+| week02 | 圆环对趾：形成行为判断（轨迹 + 速度 + 方向） | ✅ 完成 |
+| week02 | 圆环对趾：社会力模型主张 + 实现验证 | ✅ 完成（含失效分析）→ [week02/](week02/) |
 | — | A2 算个体量 | 待做 |
 | — | A3 算对子量 | 待做 |
 | — | A4 画基本图 | 待做 |
@@ -73,4 +85,7 @@ python week01/a1_trajectories.py         # A1 画轨迹图
 
 # week02
 python week02/analyze_circle.py          # 圆环对趾轨迹与几何统计
+python week02/analyze_dynamics.py        # 速度与方向分析
+python week02/model/simulate.py          # 社会力模型：对比 + 失效分析
+python week02/model/simulate.py --sweep  # 附加参数扫描
 ```

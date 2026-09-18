@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib
@@ -41,90 +40,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+sys.path.insert(0, str(HERE))
 
-# ---- 样式 ---------------------------------------------------------
-BASE = "#1F4E79"
-ACCENT = "#C00000"
-GRID = "#D9D9D9"
-TEXT = "#333333"
-CYCLIC = "twilight_shifted"     # 角度是周期量，用循环色图
+from circle_data import (ACCENT, BASE, CYCLIC, GRID, TEXT, CircleTrial,
+                         apply_style, default_data_path, draw_ring, load,
+                         save)
 
-plt.rcParams.update({
-    "font.family": "DejaVu Sans",
-    "font.size": 9,
-    "axes.linewidth": 0.6,
-    "axes.edgecolor": "#666666",
-    "axes.labelcolor": TEXT,
-    "xtick.color": TEXT,
-    "ytick.color": TEXT,
-    "xtick.major.width": 0.6,
-    "ytick.major.width": 0.6,
-    "xtick.major.size": 2.5,
-    "ytick.major.size": 2.5,
-    "savefig.bbox": "tight",
-})
-
-
-# ------------------------------------------------------------------
-# 数据
-# ------------------------------------------------------------------
-
-@dataclass
-class CircleTrial:
-    """一次圆环对趾实验的全部轨迹。位置单位为米。"""
-
-    tracks: dict[int, np.ndarray]     # agent -> (N, 2) [x, y]
-    heading: dict[int, float]         # agent -> 原始第 5 列取值
-
-    @property
-    def n_agent(self) -> int:
-        return len(self.tracks)
-
-    def theta0(self, a: int) -> float:
-        """行人 a 的起始方位角（弧度）。"""
-        p = self.tracks[a][0]
-        return float(np.arctan2(p[1], p[0]))
-
-    def radius(self, a: int) -> np.ndarray:
-        return np.linalg.norm(self.tracks[a], axis=1)
-
-    def r_start_end(self, a: int) -> tuple[float, float]:
-        r = self.radius(a)
-        return float(r[0]), float(r[-1])
-
-    def r_min(self, a: int) -> float:
-        return float(self.radius(a).min())
-
-    def path_length(self, a: int) -> float:
-        return float(np.linalg.norm(np.diff(self.tracks[a], axis=0),
-                                    axis=1).sum())
-
-    def net_length(self, a: int) -> float:
-        p = self.tracks[a]
-        return float(np.linalg.norm(p[-1] - p[0]))
-
-    def steps(self, a: int) -> np.ndarray:
-        return np.linalg.norm(np.diff(self.tracks[a], axis=0), axis=1)
-
-
-def load(path: Path) -> CircleTrial:
-    raw = np.loadtxt(path)
-    if raw.ndim != 2 or raw.shape[1] < 5:
-        raise ValueError(f"{path} 期望 5 列，实际 {raw.shape}")
-
-    agent, sample, x, y, hd = (raw[:, 0], raw[:, 1], raw[:, 2],
-                               raw[:, 3], raw[:, 4])
-    tracks: dict[int, np.ndarray] = {}
-    head: dict[int, float] = {}
-    for a in np.unique(agent).astype(int):
-        m = agent == a
-        order = np.argsort(sample[m])
-        # cm -> m
-        tracks[a] = np.column_stack([x[m][order], y[m][order]]) / 100.0
-        head[a] = float(np.unique(hd[m])[0])
-    return CircleTrial(tracks=tracks, heading=head)
+apply_style()
 
 
 def align(tr: CircleTrial) -> dict[int, np.ndarray]:
@@ -133,13 +57,8 @@ def align(tr: CircleTrial) -> dict[int, np.ndarray]:
     只做纯旋转（保持半径不变），因此起点不会严格重合于一点——起点本身
     就分布在半径 9.8~10.4 m 的薄环上，这个残差本身也是信息。
     """
-    out: dict[int, np.ndarray] = {}
-    for a, p in tr.tracks.items():
-        th = tr.theta0(a)
-        c, s = np.cos(-th), np.sin(-th)
-        R = np.array([[c, -s], [s, c]])
-        out[a] = p @ R.T
-    return out
+    al = tr.aligned()
+    return {a: al[:, i] for i, a in enumerate(tr.agents)}
 
 
 def progress(n: int) -> np.ndarray:
@@ -152,27 +71,12 @@ def progress(n: int) -> np.ndarray:
 # ------------------------------------------------------------------
 
 def _save(fig, outdir: Path, stem: str, dpi: int) -> None:
-    """只输出高清 PNG（不再输出 PDF）。"""
-    p = outdir / f"{stem}.png"
-    fig.savefig(p, dpi=dpi, facecolor="white")
-    print(f"[写出] {p.relative_to(ROOT)}")
+    save(fig, outdir, stem, dpi, root=ROOT)
 
 
 def style(ax, xlabel="x [m]", ylabel="y [m]", equal=True) -> None:
-    for side in ("top", "right"):
-        ax.spines[side].set_visible(False)
-    ax.grid(True, color=GRID, lw=0.5)
-    ax.set_axisbelow(True)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    if equal:
-        ax.set_aspect("equal", adjustable="datalim")
-
-
-def draw_ring(ax, R: float = 10.0, lw: float = 1.0) -> None:
-    t = np.linspace(0, 2 * np.pi, 400)
-    ax.plot(R * np.cos(t), R * np.sin(t), ls=(0, (5, 4)),
-            color="#9AA5B1", lw=lw, zorder=1)
+    from circle_data import style_axes
+    style_axes(ax, xlabel, ylabel, equal)
 
 
 def agents_colored(tr: CircleTrial):
@@ -342,21 +246,22 @@ def fig_stats(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     ax.set_title("Radial profile", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.5)
 
-    # (b) 步长剖面（等时间采样下正比于速度）
+    # (b) 最近圆心距离分布：谁从中心穿过、谁贴外圈绕行
     ax = axes[1]
-    S_all = []
-    for a in order:
-        s = tr.steps(a)
-        n = len(s)                         # 相邻两帧之间的位移，共 N−1 个
-        x = (np.arange(n) + 0.5) / n
-        ax.plot(x, s, color=BASE, lw=0.7, alpha=0.22)
-        S_all.append(np.interp(np.linspace(0, 1, 200), x, s))
-    Sm = np.median(np.array(S_all), axis=0)
-    ax.plot(np.linspace(0, 1, 200), Sm, color=ACCENT, lw=1.8, zorder=5)
-    style(ax, xlabel="normalised path progress",
-          ylabel="displacement between frames [m]", equal=False)
-    ax.set_title("Step-length profile  (proportional to speed)",
+    rmin = np.array([tr.r_min(a) for a in order])
+    bins = np.arange(0, 10.5, 0.5)
+    ax.hist(rmin, bins=bins, color=BASE, alpha=0.75, edgecolor="white",
+            linewidth=0.6)
+    ax.axvline(np.median(rmin), color=ACCENT, lw=1.8,
+               label=f"median {np.median(rmin):.1f} m")
+    ax.axvline(2.0, color="#7A7A7A", ls="--", lw=0.9)
+    ax.text(2.15, ax.get_ylim()[1] * 0.55, "centre\ncorridor",
+            fontsize=8, color="#7A7A7A", va="top", linespacing=1.3)
+    style(ax, xlabel="closest approach to centre [m]",
+          ylabel="number of pedestrians", equal=False)
+    ax.set_title("Route choice: through the centre or around it",
                  fontsize=10, color=TEXT, pad=8)
+    ax.legend(frameon=False, fontsize=8.5, loc="upper right")
 
     # (c) 迂回程度
     ax = axes[2]
@@ -406,9 +311,9 @@ def report(tr: CircleTrial) -> None:
     allstep = np.concatenate([tr.steps(a) for a in order])
     med = float(np.median(allstep))
     print(f"相邻帧步长 中位 {med:.4f} m/帧  最大 {allstep.max():.4f}")
-    for fps in (10, 25):
-        print(f"  若帧率 {fps:>2d} fps -> 中位速度 {med * fps:.2f} m/s"
-              f"   最大 {allstep.max() * fps:.2f} m/s")
+    print(f"  按 {tr.fps:g} fps 折算   中位速度 {med * tr.fps:.2f} m/s"
+          f"   最大 {allstep.max() * tr.fps:.2f} m/s")
+    print("  （速度与方向的完整分析见 analyze_dynamics.py）")
 
 
 def main() -> int:
