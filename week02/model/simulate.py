@@ -83,7 +83,7 @@ def build_params(preset: str, overrides: list[str] | None) -> SFMParams:
 
 
 def describe_params(p: SFMParams) -> str:
-    return (f"A={p.A:g} N, B={p.B:g} m, τ={p.tau:g} s, v⁰={p.v0:g} m/s, "
+    return (f"A={p.A:g} N, B={p.B:g} m, τ={p.tau:g} s, v0={p.v0:g} m/s, "
             f"k={p.k:g}, κ={p.kappa:g}, m={p.mass:g} kg, r={p.radius:g} m"
             + (", front-only" if p.front_only else ""))
 
@@ -192,9 +192,9 @@ def fig_compare(tr, sim: dict, params, outdir: Path, dpi: int) -> None:
     (axA, axB, axC), (axD, axE, axF) = axes
 
     # ---- 上排：世界系（旋转之前）----
-    _panel_world(axA, meas_raw, BASE, "Measured — before rotation")
-    _panel_world(axB, sim_raw, ACCENT, "Model — before rotation")
-    _panel_world(axC, meas_raw, GREY, "Overlay — before rotation",
+    _panel_world(axA, meas_raw, BASE, "实测——旋转之前")
+    _panel_world(axB, sim_raw, ACCENT, "模型——旋转之前")
+    _panel_world(axC, meas_raw, GREY, "叠加对比——旋转之前",
                  alpha=0.30, lw=0.6)
     for i in range(sim_raw.shape[1]):
         axC.plot(sim_raw[:, i, 0], sim_raw[:, i, 1], lw=0.7, alpha=0.5,
@@ -204,8 +204,8 @@ def fig_compare(tr, sim: dict, params, outdir: Path, dpi: int) -> None:
                frameon=False, fontsize=8.3, loc="upper left")
 
     # ---- 下排：对齐系 ----
-    _panel_aligned(axD, meas_al, BASE, "Measured — starts aligned")
-    _panel_aligned(axE, sim_al, ACCENT, "Model — starts aligned")
+    _panel_aligned(axD, meas_al, BASE, "实测——起点对齐后")
+    _panel_aligned(axE, sim_al, ACCENT, "模型——起点对齐后")
 
     # ---- 累计到达 ----
     ax = axF
@@ -217,7 +217,7 @@ def fig_compare(tr, sim: dict, params, outdir: Path, dpi: int) -> None:
     ax.set_ylim(0, 68)
     style_axes(ax, xlabel="time [s]", ylabel="cumulative arrivals [of 64]",
                equal=False)
-    ax.set_title("Arrivals", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("累计到达人数", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.5, loc="upper left")
     td = time_at(sim["arrivals"], t, 32)
     tm = float(np.median(tr.arrival_time()))
@@ -228,8 +228,8 @@ def fig_compare(tr, sim: dict, params, outdir: Path, dpi: int) -> None:
     ax.text(td + 0.5, 27, "model\nhalf-time", fontsize=8, color=ACCENT,
             ha="left", linespacing=1.35)
 
-    fig.suptitle("Social-force model vs. the measured ring experiment\n"
-                 f"preset «{params_name(params)}»: {describe_params(params)}",
+    fig.suptitle("社会力模型 vs 实测：圆环对趾实验\n"
+                 f"预设「{params_name(params)}」：{describe_params(params)}",
                  fontsize=11, color=TEXT, y=0.995, linespacing=1.6)
     fig.tight_layout(rect=(0, 0, 1, 0.955))
     save(fig, outdir, "fig7_sfm_vs_measured", dpi, root=ROOT.parent)
@@ -266,9 +266,8 @@ def fig_failure(tr, lit: dict, tuned: dict, front: dict, sweeps: dict | None,
                ylabel="median distance to centre [m]", equal=False)
     ax.set_ylim(0, 11)
     ax.set_xlim(0, lit["t"][-1])
-    ax.set_title("Tuning flattens the dive but keeps it",
-                 fontsize=10, color=TEXT, pad=8)
-    ax.legend(frameon=False, fontsize=8.3, loc="lower right")
+    ax.set_title("标定只是把下冲压平，并未消除", fontsize=10, color=TEXT, pad=8)
+    ax.legend(frameon=False, fontsize=8.3, loc="center right")
 
     # (b) 速率 vs 邻居数
     ax = axB
@@ -306,7 +305,7 @@ def fig_failure(tr, lit: dict, tuned: dict, front: dict, sweeps: dict | None,
     style_axes(ax, xlabel="neighbours within 2 m", ylabel="speed [m/s]",
                equal=False)
     ax.set_ylim(bottom=0)
-    ax.set_title("Density–speed relation", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("速率—密度关系", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8, loc="lower left", ncol=2)
 
     # (c) 中心区人数占比
@@ -323,7 +322,7 @@ def fig_failure(tr, lit: dict, tuned: dict, front: dict, sweeps: dict | None,
     ax.set_ylim(0, 1.02)
     style_axes(ax, xlabel="time [s]",
                ylabel="fraction within 3 m of the centre", equal=False)
-    ax.set_title("How full the centre gets", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("圆心区域有多挤", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="center right")
     dts = lit["t"][1] - lit["t"][0]
     j_lit = jam_duration(lit["central"], dts)
@@ -331,9 +330,8 @@ def fig_failure(tr, lit: dict, tuned: dict, front: dict, sweeps: dict | None,
     j_end = int(np.max(np.where(lit["central"] > 0.8)))
     ax.annotate("", xy=(lit["t"][i_j], 0.90), xytext=(lit["t"][j_end], 0.90),
                 arrowprops=dict(arrowstyle="<->", color=ACCENT, lw=1.2))
-    ax.text(0.5 * (lit["t"][i_j] + lit["t"][j_end]), 0.925,
-            f"{j_lit:.0f} s over 80 %", fontsize=8.4, color=ACCENT,
-            ha="center")
+    ax.text(lit["t"][j_end] + 0.4, 0.90, f"{j_lit:.0f} s over 80 %",
+            fontsize=8.4, color=ACCENT, ha="left", va="center")
 
     # (d) 各配置的中心拥堵时长
     ax = axD
@@ -365,11 +363,11 @@ def fig_failure(tr, lit: dict, tuned: dict, front: dict, sweeps: dict | None,
     style_axes(ax, xlabel="time with the centre over 80 % full  [s]",
                ylabel="", equal=False)
     ax.set_xlim(0, max(list(vals) + [ref]) * 1.32)
-    ax.set_title("Tuning nearly removes it — at a cost", fontsize=10,
+    ax.set_title("标定几乎消除了拥堵，但代价明确", fontsize=10,
                  color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="lower right")
 
-    fig.suptitle(f"Failure analysis   (tuned preset: {describe_params(params)})",
+    fig.suptitle(f"失效分析（调参后预设：{describe_params(params)}）",
                  fontsize=11, color=TEXT)
     fig.tight_layout(rect=(0, 0, 1, 0.955))
     save(fig, outdir, "fig8_sfm_failure", dpi, root=ROOT.parent)
@@ -403,8 +401,8 @@ def fig_gif(tr, sim: dict, params, outdir: Path, t_end: float = 22.0,
 
     fig, axes = plt.subplots(1, 2, figsize=(9.8, 4.6))
     panels = []
-    for ax, color, title in ((axes[0], BASE, "Measured"),
-                             (axes[1], ACCENT, "Social-force model")):
+    for ax, color, title in ((axes[0], BASE, "实测"),
+                             (axes[1], ACCENT, "社会力模型")):
         draw_ring(ax)
         ax.plot(goal[:, 0], goal[:, 1], "o", ms=2.4, mfc="none",
                 mec="#BBBBBB", mew=0.5, zorder=3)
@@ -423,7 +421,7 @@ def fig_gif(tr, sim: dict, params, outdir: Path, t_end: float = 22.0,
     stamp = fig.text(0.5, 0.045, "", ha="center", fontsize=9, color=TEXT)
     fig.text(0.5, 0.008, "measured record ends at 17 s", ha="center",
              fontsize=7.6, color=GREY)
-    fig.suptitle("Circle antipodal — measured vs. social-force model   "
+    fig.suptitle("圆环对趾实验——实测 vs 社会力模型   "
                  f"({describe_params(params)})", fontsize=9.5, color=TEXT,
                  y=0.985)
     fig.tight_layout(rect=(0.01, 0.075, 0.99, 0.945))
@@ -469,13 +467,13 @@ def run_sweep(tr, duration: float) -> dict:
     labels, jam = [], []
     for A in (2000, 4000, 8000, 12000, 16000):
         r = run_config(tr, SFMParams(A=A), duration)
-        labels.append(f"v⁰=2.0  A={A / 1000:g}k")
+        labels.append(f"v0=2.0  A={A / 1000:g}k")
         jam.append(jam_duration(r["central"], r["t"][1] - r["t"][0]))
         print(f"    A={A:<6g} 中心拥堵 {jam[-1]:5.1f} s   "
               f"t50 {time_at(r['arrivals'], r['t'], 32):5.1f} s")
     for B in (0.08, 0.10, 0.12):
         r = run_config(tr, SFMParams(v0=2.8, A=12000.0, B=B), duration)
-        labels.append(f"v⁰=2.8 A=12k B={B:g}")
+        labels.append(f"v0=2.8 A=12k B={B:g}")
         jam.append(jam_duration(r["central"], r["t"][1] - r["t"][0]))
         print(f"    B={B:<5g} 中心拥堵 {jam[-1]:5.1f} s   "
               f"t50 {time_at(r['arrivals'], r['t'], 32):5.1f} s")

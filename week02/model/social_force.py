@@ -5,7 +5,7 @@
 随机扰动）先不加，留作后续扩展：
 
 1. **终点的吸引力**（driving force / goal attraction）
-   行人以特征时间 τ 把自己的速度向期望速度 v⁰·e_i 松弛，e_i 指向对趾点。
+   行人以特征时间 τ 把自己的速度向期望速度 v0·e_i 松弛，e_i 指向对趾点。
    这是把人"拉"向目标的那一项，也是唯一让行人前进的力。
 
 2. **行人间的排斥力**（social / psychological repulsion）
@@ -19,7 +19,7 @@
 
 控制方程
 --------
-    m_i dv_i/dt = m_i (v⁰_i e_i − v_i) / τ_i
+    m_i dv_i/dt = m_i (v0_i e_i − v_i) / τ_i
                   + Σ_{j≠i} [ A exp((r_ij − d_ij)/B) + k g(r_ij − d_ij) ] n_ij
                   + Σ_{j≠i} κ g(r_ij − d_ij) (Δv_ji · t_ij) t_ij
 
@@ -155,7 +155,7 @@ def accelerations(pos: np.ndarray, vel: np.ndarray, goal: np.ndarray,
     A = pos.shape[0]
     v0_arr = np.full(A, p.v0) if v0 is None else np.asarray(v0, dtype=float)
 
-    # --- 1. 终点的吸引力：向以 v⁰ 指向目标的期望速度松弛 ---
+    # --- 1. 终点的吸引力：向以 v0 指向目标的期望速度松弛 ---
     e = goal - pos
     e /= np.maximum(np.linalg.norm(e, axis=1, keepdims=True), 1e-12)
     drive = p.mass * (v0_arr[:, None] * e - vel) / p.tau

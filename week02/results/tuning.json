@@ -2,7 +2,7 @@
   "screen": [
     {
       "knob": "v0",
-      "label": "desired speed v⁰ [m/s]",
+      "label": "desired speed v0 [m/s]",
       "value": 1.5,
       "t50": NaN,
       "t100": NaN,
@@ -19,7 +19,7 @@
     },
     {
       "knob": "v0",
-      "label": "desired speed v⁰ [m/s]",
+      "label": "desired speed v0 [m/s]",
       "value": 2.0,
       "t50": 17.84,
       "t100": 21.48,
@@ -36,7 +36,7 @@
     },
     {
       "knob": "v0",
-      "label": "desired speed v⁰ [m/s]",
+      "label": "desired speed v0 [m/s]",
       "value": 2.5,
       "t50": 15.16,
       "t100": 20.2,
@@ -53,7 +53,7 @@
     },
     {
       "knob": "v0",
-      "label": "desired speed v⁰ [m/s]",
+      "label": "desired speed v0 [m/s]",
       "value": 3.0,
       "t50": 12.8,
       "t100": 16.080000000000002,
@@ -70,7 +70,7 @@
     },
     {
       "knob": "v0",
-      "label": "desired speed v⁰ [m/s]",
+      "label": "desired speed v0 [m/s]",
       "value": 3.5,
       "t50": 10.76,
       "t100": 14.84,

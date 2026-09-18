@@ -111,8 +111,8 @@ def fig_raw(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     ax.plot(0, 0, marker="+", ms=10, color=ACCENT, mew=1.4, zorder=4)
 
     style(ax)
-    ax.set_title(f"Circle antipodal — raw trajectories\n"
-                 f"{tr.n_agent} pedestrians on a 10 m circle",
+    ax.set_title(f"圆环对趾实验：原始轨迹（旋转前）\n"
+                 f"{tr.n_agent} 位行人，圆周半径 10 m",
                  fontsize=10.5, color=TEXT, pad=10)
 
     handles = [
@@ -203,8 +203,8 @@ def fig_aligned(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     ax.plot(0, 0, marker="+", ms=10, color=ACCENT, mew=1.4, zorder=4)
 
     style(ax)
-    ax.set_title("Trajectories rotated about the centre\n"
-                 "so that every start and goal coincide",
+    ax.set_title("绕圆心旋转对齐后\n"
+                 "所有起点与终点重合",
                  fontsize=10.5, color=TEXT, pad=10)
     ax.legend(loc="upper left", frameon=False, fontsize=8.5,
               handletextpad=0.6, borderpad=0.2,
@@ -243,7 +243,7 @@ def fig_stats(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     style(ax, xlabel="normalised path progress", ylabel="distance to centre [m]",
           equal=False)
     ax.set_ylim(0, 11)
-    ax.set_title("Radial profile", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("半径剖面", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.5)
 
     # (b) 最近圆心距离分布：谁从中心穿过、谁贴外圈绕行
@@ -259,7 +259,7 @@ def fig_stats(tr: CircleTrial, outdir: Path, dpi: int) -> None:
             fontsize=8, color="#7A7A7A", va="top", linespacing=1.3)
     style(ax, xlabel="closest approach to centre [m]",
           ylabel="number of pedestrians", equal=False)
-    ax.set_title("Route choice: through the centre or around it",
+    ax.set_title("路线选择：穿过圆心，还是绕行外圈",
                  fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.5, loc="upper right")
 
@@ -273,7 +273,7 @@ def fig_stats(tr: CircleTrial, outdir: Path, dpi: int) -> None:
     style(ax, xlabel="closest approach to centre [m]",
           ylabel="path length / straight-line distance", equal=False)
     ax.set_ylim(0.98, max(ratio) * 1.1)
-    ax.set_title("Detour vs. how central the route is",
+    ax.set_title("迂回程度与离中心远近",
                  fontsize=10, color=TEXT, pad=8)
     cb = fig.colorbar(sc, ax=ax, fraction=0.045, pad=0.03)
     cb.set_label("detour ratio", fontsize=8.5, color=TEXT)

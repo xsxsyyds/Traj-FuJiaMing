@@ -3,9 +3,9 @@
 
 分两阶段：
 
-- ``screen``  单因子扫描：在其他参数固定时逐个改 v⁰、A、B、τ，看清每个
+- ``screen``  单因子扫描：在其他参数固定时逐个改 v0、A、B、τ，看清每个
   旋钮各自控制什么行为（"做什么"）。
-- ``search``  在有希望的区域内做 v⁰ × A 网格，按与实测的偏差打分，给出
+- ``search``  在有希望的区域内做 v0 × A 网格，按与实测的偏差打分，给出
   一组可用的参数组合。
 
 打分（越小越好）由四项归一化误差平均而来：
@@ -105,7 +105,7 @@ def evaluate(tr, params: SFMParams, duration: float,
 # ------------------------------------------------------------------
 
 KNOBS = [
-    ("v0", "desired speed v⁰ [m/s]", [1.5, 2.0, 2.5, 3.0, 3.5]),
+    ("v0", "desired speed v0 [m/s]", [1.5, 2.0, 2.5, 3.0, 3.5]),
     ("A", "repulsion strength A [N]", [500, 1000, 2000, 4000, 8000]),
     ("B", "repulsion range B [m]", [0.04, 0.08, 0.12, 0.20, 0.30]),
     ("tau", "relaxation time τ [s]", [0.15, 0.3, 0.5, 1.0, 2.0]),
@@ -136,7 +136,7 @@ def search(tr, duration: float, base: dict) -> list[dict]:
             p = SFMParams(v0=v0, A=A, **base)
             r = evaluate(tr, p, duration)
             rows.append({"v0": v0, "A": A, **r})
-            print(f"  v⁰={v0:<4g} A={A:<6g} → t50 {r['t50']:5.1f}s  "
+            print(f"  v0={v0:<4g} A={A:<6g} → t50 {r['t50']:5.1f}s  "
                   f"拥堵 {r['jam']:4.1f}s  IQR {r['lat_iqr']:.2f}m  "
                   f"右 {r['right']:2d}/64  到达 {r['arrived']:2d}  "
                   f"score {r['score']:.3f}")
@@ -182,8 +182,7 @@ def fig_screen(rows: list[dict], outdir: Path, dpi: int) -> None:
         ax.legend(h1 + h2, l1 + l2, frameon=False, fontsize=8,
                   loc="upper center", ncol=2)
 
-    fig.suptitle("One-at-a-time parameter screen  (thick red = gridlock, "
-                 "blue = arrival half-time)", fontsize=11, color=TEXT)
+    fig.suptitle("单因子参数扫描（红：中心拥堵时长；蓝：中位到达时间）", fontsize=11, color=TEXT)
     fig.tight_layout(rect=(0, 0, 1, 0.97))
     save(fig, outdir, "fig9_param_screen", dpi, root=ROOT.parent)
     plt.close(fig)
@@ -201,16 +200,16 @@ def fig_search(rows: list[dict], outdir: Path, dpi: int) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.6))
     for ax, M, title, cmap, fmt in (
-            (axes[0], Z, "mismatch score (lower is better)", "viridis_r",
+            (axes[0], Z, "偏差打分（越小越好）", "viridis_r",
              "%.2f"),
-            (axes[1], J, "gridlock at the centre [s]", "magma_r", "%.1f")):
+            (axes[1], J, "中心拥堵时长 [s]", "magma_r", "%.1f")):
         im = ax.imshow(M, cmap=cmap, aspect="auto", origin="lower")
         ax.set_xticks(range(len(As)))
         ax.set_xticklabels([f"{a:g}" for a in As])
         ax.set_yticks(range(len(v0s)))
         ax.set_yticklabels([f"{v:g}" for v in v0s])
         ax.set_xlabel("repulsion strength A [N]", fontsize=9)
-        ax.set_ylabel("desired speed v⁰ [m/s]", fontsize=9)
+        ax.set_ylabel("desired speed v0 [m/s]", fontsize=9)
         ax.set_title(title, fontsize=10, color=TEXT, pad=8)
         for i in range(len(v0s)):
             for j in range(len(As)):
@@ -220,7 +219,7 @@ def fig_search(rows: list[dict], outdir: Path, dpi: int) -> None:
                             else "#222222")
         cb = fig.colorbar(im, ax=ax, fraction=0.045, pad=0.03)
         cb.outline.set_linewidth(0.5)
-    fig.suptitle("Two-knob search: how much of the gap can tuning close?",
+    fig.suptitle("双参数网格搜索：调参能补上多少差距？",
                  fontsize=11, color=TEXT)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     save(fig, outdir, "fig10_param_search", dpi, root=ROOT.parent)
@@ -240,7 +239,7 @@ def refine(tr, duration: float) -> list[dict]:
                 p = SFMParams(v0=v0, A=A, B=B)
                 r = evaluate(tr, p, duration)
                 rows.append({"v0": v0, "A": A, "B": B, **r})
-                print(f"  v⁰={v0:<4g} A={A:<6g} B={B:<5g} → "
+                print(f"  v0={v0:<4g} A={A:<6g} B={B:<5g} → "
                       f"t50 {r['t50']:5.1f}s  拥堵 {r['jam']:4.1f}s  "
                       f"IQR {r['lat_iqr']:.2f}m  右 {r['right']:2d}/64  "
                       f"v_max {r['vmax']:.1f}  到达 {r['arrived']:2d}  "
@@ -251,7 +250,7 @@ def refine(tr, duration: float) -> list[dict]:
 # ------------------------------------------------------------------
 
 def fig_refine(rows: list[dict], outdir: Path, dpi: int) -> None:
-    """三张指标随 A 变化的曲线（每个 v⁰/B 一条），标出可选区间。"""
+    """三张指标随 A 变化的曲线（每个 v0/B 一条），标出可选区间。"""
     combos = sorted({(r["v0"], r["B"]) for r in rows})
     fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.5))
     cmap = plt.get_cmap("viridis")
@@ -260,7 +259,7 @@ def fig_refine(rows: list[dict], outdir: Path, dpi: int) -> None:
                      key=lambda r: r["A"])
         x = [r["A"] for r in sub]
         col = cmap(k / max(1, len(combos) - 1))
-        lab = f"v⁰={v0:g}, B={B:g}"
+        lab = f"v0={v0:g}, B={B:g}"
         axes[0].plot(x, [r["jam"] for r in sub], "o-", color=col, lw=1.5,
                      ms=4.5, mec="white", mew=0.5, label=lab)
         axes[1].plot(x, [r["t50"] for r in sub], "o-", color=col, lw=1.5,
@@ -274,19 +273,19 @@ def fig_refine(rows: list[dict], outdir: Path, dpi: int) -> None:
     axes[0].axhline(MEAS["jam"], color=GREY, ls="--", lw=1.3,
                     label="measured 0 s")
     axes[0].set_ylabel("gridlock at the centre [s]")
-    axes[0].set_title("Gridlock can be tuned away…", fontsize=10, pad=8)
+    axes[0].set_title("拥堵可以调掉……", fontsize=10, pad=8)
     axes[1].axhline(MEAS["t50"], color=GREY, ls="--", lw=1.3,
                     label="measured 12.8 s")
     axes[1].set_ylabel("half-time arrival [s]")
-    axes[1].set_title("…but the arrival time stays late", fontsize=10, pad=8)
+    axes[1].set_title("……但到达时间仍然偏晚", fontsize=10, pad=8)
     axes[2].axhline(64, color=GREY, ls="--", lw=1.3, label="all 64")
     axes[2].set_ylabel("pedestrians arriving")
-    axes[2].set_title("…and pushing too hard strands people", fontsize=10,
+    axes[2].set_title("……用力过猛会有人到不了", fontsize=10,
                       pad=8)
     axes[0].legend(frameon=False, fontsize=8, ncol=2, loc="upper right")
     axes[1].legend(frameon=False, fontsize=8.4, loc="upper left")
     axes[2].legend(frameon=False, fontsize=8.4, loc="lower left")
-    fig.suptitle("Refinement inside the defensible parameter range",
+    fig.suptitle("在可辩护参数区间内的细化",
                  fontsize=11, color=TEXT)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     save(fig, outdir, "fig11_param_refine", dpi, root=ROOT.parent)
@@ -319,12 +318,12 @@ def main() -> int:
         print()
 
     if "search" in stages:
-        print("阶段二 · v⁰ × A 网格")
+        print("阶段二 · v0 × A 网格")
         rows2 = search(tr, args.duration, base={})
         summary["search"] = rows2
         fig_search(rows2, outdir, args.dpi)
         best = min(rows2, key=lambda r: r["score"])
-        print(f"\n打分最优: v⁰={best['v0']:g} A={best['A']:g} "
+        print(f"\n打分最优: v0={best['v0']:g} A={best['A']:g} "
               f"score={best['score']:.3f}  t50={best['t50']:.1f}s "
               f"拥堵={best['jam']:.1f}s  到达={best['arrived']}")
         summary["best_score"] = {k: best[k] for k in
@@ -340,7 +339,7 @@ def main() -> int:
         ok = [r for r in rows3 if r["arrived"] == 64]
         best = min(ok, key=lambda r: r["score"]) if ok else None
         if best:
-            print(f"\n可辩护区间内最优: v⁰={best['v0']:g} A={best['A']:g} "
+            print(f"\n可辩护区间内最优: v0={best['v0']:g} A={best['A']:g} "
                   f"B={best['B']:g}  score={best['score']:.3f}  "
                   f"t50={best['t50']:.1f}s  拥堵={best['jam']:.1f}s  "
                   f"IQR={best['lat_iqr']:.2f}m  右={best['right']}/64")

@@ -54,14 +54,40 @@ GRID = "#D9D9D9"
 TEXT = "#333333"
 CYCLIC = "twilight_shifted"      # 角度是周期量，用循环色图
 
+#: 字体候选：表头用中文，因此必须有一个含 CJK 字形的字体。
+#: Windows 上首选微软雅黑（拉丁与 CJK 都全，且不缺 U+2212 减号）。
+CJK_FONTS = ("Microsoft YaHei", "Noto Sans SC", "SimHei", "SimSun",
+             "DejaVu Sans")
+
+
+def pick_font() -> str:
+    """挑一个既含中文字形、又不缺减号的可用字体。"""
+    from matplotlib import font_manager as fm
+
+    have = {f.name for f in fm.fontManager.ttflist}
+    for name in CJK_FONTS:
+        if name in have:
+            return name
+    return "DejaVu Sans"
+
 
 def apply_style() -> None:
-    """设置 matplotlib 全局样式。绘图前调用一次。"""
+    """设置 matplotlib 全局样式。绘图前调用一次。
+
+    约定（2026-09-18）：**图题（表头）用中文，横纵坐标、图例、图内标注用
+    英文**。因此字体必须同时具备 CJK 与拉丁字形；`axes.unicode_minus`
+    关掉，避免中文字体缺 U+2212 时把负号渲染成方框。
+
+    ⚠️ 微软雅黑**缺 U+2070（上标 0）**，所以 `v⁰` 这类写法会渲染成方框，
+    图上一律写成 `v0`。其余常用符号（Δ τ κ — … 「」（） ： ¹²³ ° ± ≥）
+    经检查都齐全。
+    """
     import matplotlib.pyplot as plt
 
     plt.rcParams.update({
-        "font.family": "DejaVu Sans",
+        "font.family": pick_font(),
         "font.size": 9,
+        "axes.unicode_minus": False,
         "axes.linewidth": 0.6,
         "axes.edgecolor": "#666666",
         "axes.labelcolor": TEXT,

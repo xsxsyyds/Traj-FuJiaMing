@@ -122,7 +122,7 @@ def fig_speed(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
     ax.set_xlim(0, tr.duration)
     ax.set_ylim(bottom=0)
     style_axes(ax, xlabel="time [s]", ylabel="speed [m/s]", equal=False)
-    ax.set_title("Speed through the run", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("全程速率变化", fontsize=10, color=TEXT, pad=8)
 
     # 右轴：还在行进的人数比例——解释末端中位数为何塌下来
     n_moving = (Smid > 0.3).sum(axis=1) / tr.n_agent
@@ -158,7 +158,7 @@ def fig_speed(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
     style_axes(ax, xlabel="normalised path progress", ylabel="speed [m/s]",
                equal=False)
     ax.set_ylim(bottom=0)
-    ax.set_title("Speed along the route", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("速率沿路径的变化", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="upper right")
     i_pk = int(np.nanargmax(q[50]))
     annotate(ax, f"peak {q[50][i_pk]:.2f} m/s\nat {mid[i_pk]:.0%} of the way",
@@ -177,7 +177,7 @@ def fig_speed(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
         ax.axvline(x, color=c, lw=1.6, label=lab)
     style_axes(ax, xlabel="speed [m/s]", ylabel="samples during travel",
                equal=False)
-    ax.set_title("Speed distribution", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("速率分布", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="upper right")
     annotate(ax, "walking pace 1–2.5 m/s\ndominates", "center right")
 
@@ -233,7 +233,7 @@ def fig_congestion(tr: CircleTrial, outdir: Path, dpi: int,
     style_axes(ax, xlabel="neighbours within 2 m",
                ylabel="speed [m/s]  (median, IQR)", equal=False)
     ax.set_ylim(0, 3.4)
-    ax.set_title("Speed falls as the crowd thickens",
+    ax.set_title("人群越密，走得越慢",
                  fontsize=10, color=TEXT, pad=8)
     annotate(ax, f"Spearman ρ = {rho:.2f}\nn = {int(m.sum())} samples"
                  "\n(numbers in bars = samples)", "upper right")
@@ -260,7 +260,7 @@ def fig_congestion(tr: CircleTrial, outdir: Path, dpi: int,
                equal=False)
     ax.set_ylim(bottom=0)
     ax.set_xlim(0, tr.duration)
-    ax.set_title("How close people actually get",
+    ax.set_title("两人最贴近到什么程度",
                  fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="lower right")
 
@@ -275,7 +275,7 @@ def fig_congestion(tr: CircleTrial, outdir: Path, dpi: int,
     style_axes(ax, xlabel="arrival time [s]", ylabel="number of pedestrians",
                equal=False)
     ax.set_ylim(0, ax.get_ylim()[1] * 1.30)
-    ax.set_title("Arrival times", fontsize=10, color=TEXT, pad=8)
+    ax.set_title("到达时间分布", fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="upper left")
     annotate(ax, f"IQR {q1:.1f}–{q3:.1f} s\np10–p90 spread "
                  f"{np.percentile(arr, 90) - np.percentile(arr, 10):.1f} s",
@@ -332,7 +332,7 @@ def fig_heading(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
     style_axes(ax, xlabel="normalised path progress",
                ylabel="lateral offset [m]\n(> 0 = to the right)",
                equal=False)
-    ax.set_title("Fan out, then re-converge",
+    ax.set_title("先散开，再收拢",
                  fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="lower left")
 
@@ -353,7 +353,7 @@ def fig_heading(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
                ylabel="angle to the direct line [deg]\n(> 0 = veering right)",
                equal=False)
     ax.set_ylim(-60, 60)
-    ax.set_title("Heading versus the straight line",
+    ax.set_title("朝向与直线的夹角",
                  fontsize=10, color=TEXT, pad=8)
     ax.legend(frameon=False, fontsize=8.3, loc="upper left")
     frac = float(np.mean(np.abs(dev[mm]) < 20))
@@ -370,7 +370,7 @@ def fig_heading(tr: CircleTrial, outdir: Path, dpi: int, smooth: int) -> dict:
     ax.set_ylim(-1, A)
     style_axes(ax, xlabel="lateral offset when passing the centre [m]",
                ylabel="pedestrians (sorted)", equal=False)
-    ax.set_title("Which side they squeeze past on",
+    ax.set_title("从哪一侧挤过中心",
                  fontsize=10, color=TEXT, pad=8)
     handles = [Line2D([], [], marker="s", ls="none", ms=7, color=BASE,
                       label=f"right of travel: {n_right}"),
