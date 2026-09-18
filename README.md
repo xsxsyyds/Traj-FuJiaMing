@@ -23,9 +23,9 @@ week02/
 ├── circle_data.py        圆环数据读取与运动学量（共用模块）
 ├── analyze_circle.py     轨迹可视化
 ├── analyze_dynamics.py   速度与方向分析（帧率 25 fps）
-├── model/                社会力模型（三项力）与仿真、失效分析
+├── model/                社会力模型（三项力）、仿真、参数标定、动图
 ├── 作业.md               连贯段落版结论
-└── results/              fig1–fig8，全部高清 PNG
+└── results/              fig1–fig11 + 全程动图 GIF，全部高清 PNG
 ```
 
 每周目录内放三样：图或视频、一段结论、代码。
@@ -87,5 +87,6 @@ python week01/a1_trajectories.py         # A1 画轨迹图
 python week02/analyze_circle.py          # 圆环对趾轨迹与几何统计
 python week02/analyze_dynamics.py        # 速度与方向分析
 python week02/model/simulate.py          # 社会力模型：对比 + 失效分析
-python week02/model/simulate.py --sweep  # 附加参数扫描
+python week02/model/simulate.py --sweep --gif    # 附加参数扫描并录全程动图
+python week02/model/tune.py              # 参数筛选（约 5 分钟）
 ```

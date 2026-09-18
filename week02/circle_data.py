@@ -257,6 +257,33 @@ class CircleTrial:
         """(N, A) 对齐系中的横向偏移，单位米。``y > 0`` 为行进方向右手侧。"""
         return self.aligned(smooth)[:, :, 1]
 
+    def midjourney_index(self) -> np.ndarray:
+        """(A,) 每人走完自己累计路程一半时对应的帧下标。
+
+        用"各自的半程"而不按时间百分比取点，是因为不同配置下走完全程
+        所需的时间不同；按半程取样才可比。
+        """
+        X = self.positions()
+        seg = np.linalg.norm(np.diff(X, axis=0), axis=2)          # (N−1, A)
+        cum = np.concatenate([np.zeros((1, self.n_agent)),
+                              np.cumsum(seg, axis=0)], axis=0)
+        total = cum[-1]
+        out = np.empty(self.n_agent, dtype=int)
+        for i in range(self.n_agent):
+            out[i] = (int(np.searchsorted(cum[:, i], 0.5 * total[i]))
+                      if total[i] > 0 else self.n_frame // 2)
+        return np.clip(out, 0, self.n_frame - 1)
+
+    def lateral_iqr(self) -> float:
+        """每人行至各自半程时横向偏移的跨人 IQR [m]，衡量"人流散开多宽"。
+
+        与轨迹总时长无关，因此实测（17 s）与仿真（25 s）可以直接比较。
+        """
+        lat = self.lateral()
+        j = self.midjourney_index()
+        v = lat[j, np.arange(self.n_agent)]
+        return float(np.percentile(v, 75) - np.percentile(v, 25))
+
     def bearing_deviation(self, smooth: int = 5) -> np.ndarray:
         """(N, A) 与"起点→目标直线"的夹角，单位度，带符号。
 
