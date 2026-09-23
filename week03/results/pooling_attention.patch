@@ -1,0 +1,176 @@
+# week03 池化层修改补丁：注意力池化 + 前 180° 半平面视野
+#
+# 基线：课程下发的 TrajNet++ 课堂包（上游 vita-epfl/trajnetplusplusbaselines 固定提交 99a6e9d）
+# 用法（在 Week3-TrajNet++ 目录下）：
+#     git apply -p1 pooling_attention.patch
+# 改动内容：
+#   1) gridbased_pooling.py 新增 social_attention()：
+#      - 用历史速度 obs2-obs1 定义行人朝向，可只保留前 180° 半平面内的邻居；
+#      - 邻居特征先乘注意力权重再入格（query=自身隐状态，key=邻居压缩隐状态）；
+#      - 同格多邻居用 scatter_add_ 累加，替掉上游 occ[arange,oi]=... 的「后写覆盖先写」；
+#      - 使用前先对 hidden_state 做 nan_to_num（上游用 fill_(nan) 做 padding，不做会 NaN）。
+#   2) trainer.py 把 attn_social / front_social 加入 --type 的 choices。
+# 不改动任何上游既有分支：--type social/occupancy/directional 行为与原来完全一致。
+#
+--- a/trajnetbaselines/lstm/gridbased_pooling.py
++++ b/trajnetbaselines/lstm/gridbased_pooling.py
+@@ -57,7 +57,7 @@
+         self.pooling_dim = 1
+         if self.type_ == 'directional':
+             self.pooling_dim = 2
+-        if self.type_ == 'social':
++        if self.type_ in ('social', 'attn_social', 'front_social'):
+             ## Encode hidden-dim into latent-dim vector (faster computation)
+             self.hidden_dim_encoding = torch.nn.Linear(hidden_dim, latent_dim)
+             self.pooling_dim = latent_dim
+@@ -65,6 +65,13 @@
+             ## Encode hidden-dim into latent-dim vector (faster computation)
+             self.hidden_dim_encoding = torch.nn.Linear(hidden_dim, latent_dim)
+             self.pooling_dim = latent_dim + 2
++
++        ## 课堂修改：注意力池化所需的打分模块
++        ## query 来自行人自身隐状态，key 来自邻居的压缩隐状态；无 bias 以尽量少增参数
++        if self.type_ in ('attn_social', 'front_social'):
++            self.attn_query = torch.nn.Linear(hidden_dim, latent_dim, bias=False)
++            self.attn_key = torch.nn.Linear(latent_dim, latent_dim, bias=False)
++            self.attn_scale = float(latent_dim) ** 0.5
+ 
+         ## Final Representation Size
+         if out_dim is None:
+@@ -100,6 +107,12 @@
+             grid = self.directional(obs1, obs2)
+         elif self.type_ == 'social':
+             grid = self.social(hidden_state, obs1, obs2)
++        elif self.type_ == 'attn_social':
++            ## 课堂修改：注意力加权池化，全部方向
++            grid = self.social_attention(hidden_state, obs1, obs2, front_half=False)
++        elif self.type_ == 'front_social':
++            ## 课堂修改：注意力加权池化，只用前 180° 半平面内的邻居
++            grid = self.social_attention(hidden_state, obs1, obs2, front_half=True)
+         elif self.type_ == 'dir_social':
+             grid = self.dir_social(hidden_state, obs1, obs2)
+ 
+@@ -210,6 +223,109 @@
+ 
+         ## Generate Occupancy Map
+         return self.occupancy(obs2, dir_social_rep, past_obs=obs1)
++
++    def social_attention(self, hidden_state, obs1, obs2, front_half=True):
++        """课堂修改：隐状态**注意力**池化，可选只取前 180° 半平面。
++
++        与上游 'social' 的三点区别
++        --------------------------
++        1. **朝向**：用历史速度 v_i = obs2_i - obs1_i 定义第 i 个行人自己的朝向。
++           front_half=True 时只保留 dot(pos_j - pos_i, v_i) > 0 的邻居，即位于
++           该行人**前 180° 半平面**内的个体；其余邻居的贡献置零。
++           （上游 `--front` 只是把网格平移到坐标轴一侧、不随朝向旋转，
++             并不能称为"行人朝向前方"；这里按课堂说明用历史速度定义局部朝向。）
++        2. **注意力权重**：邻居特征先乘注意力权重再入格。打分
++           score_ij = <W_q h_i, W_k e_j> / sqrt(d)，**只在前向邻居上做 softmax**；
++           没有任何前向邻居时权重全为 0（交互向量退化为空，符合"看不到人"）。
++        3. **同格累加**：同格多邻居用 `scatter_add_` **累加**，而不是上游
++           `occ[arange, oi] = other_values` 的"后写覆盖先写"。
++
++        参数语义与上游 occupancy 保持一致：
++            obs1 : [batch_size, num_tracks, 2]  上一帧位置
++            obs2 : [batch_size, num_tracks, 2]  当前帧位置
++        返回 : [batch_size * num_tracks, pooling_dim, n, n]
++        """
++        batch_size, num_tracks = obs2.size(0), obs2.size(1)
++        device = obs2.device
++
++        ## 只有一个行人时退化为常数网格（与上游一致）
++        if num_tracks == 1:
++            return self.constant * torch.ones(1, self.pooling_dim, self.n, self.n, device=device)
++
++        ## ⚠️ 必须先洗 NaN！
++        ## generate_pooling_inputs 用 fill_(nan) 做 padding（lstm.py L31-34），
++        ## 上游 social() 是在编码**前**用 nan_to_num 把 NaN 清掉的。这里若直接用原始
++        ## hidden_state 去算 query，NaN 会经 attn_query → softmax → 乘法污染
++        ## hidden_dim_encoding / attn_query / attn_key 的**梯度**，Adam 一步之后就永久 NaN。
++        hidden_state = torch.nan_to_num(hidden_state)
++
++        ## 邻居掩码：去掉"自己对自己"
++        ## [batch_size, num_tracks, num_tracks]，True 表示 j 是 i 的邻居
++        mask = ~torch.eye(num_tracks, device=device, dtype=torch.bool)\
++            .unsqueeze(0).repeat(batch_size, 1, 1)
++
++        ## 邻居特征 = 压缩后的隐状态（与 'social' 完全相同）
++        hs = hidden_state.unsqueeze(1).repeat(1, num_tracks, 1, 1)[mask]\
++            .reshape(batch_size, num_tracks, num_tracks - 1, -1)
++        hs = torch.nan_to_num(hs)
++        values = self.hidden_dim_encoding(hs)                      # [B, T, T-1, latent]
++        ## 相对位置 rel[i, j] = pos_j - pos_i
++        rel = (obs2.unsqueeze(1) - obs2.unsqueeze(2))[mask]\
++            .reshape(batch_size, num_tracks, num_tracks - 1, 2)
++        rel = torch.nan_to_num(rel)
++
++        ## 朝向 = 历史速度（obs2 - obs1），与 lstm.py 里 curr_velocity 同一口径
++        vel = torch.nan_to_num(obs2 - obs1)                        # [B, T, 2]
++
++        ## 前 180° 半平面掩码
++        if front_half:
++            proj = (rel * vel.unsqueeze(2)).sum(dim=-1)            # [B, T, T-1]
++            keep = proj > 0
++            ## 速度近乎 0 时朝向无定义，对这些行人不做方向筛选，避免误杀全部邻居
++            still = torch.linalg.vector_norm(vel, dim=-1, keepdim=True) < 1e-6
++            keep = keep | still
++        else:
++            keep = torch.ones(batch_size, num_tracks, num_tracks - 1,
++                              device=device, dtype=torch.bool)
++
++        ## 注意力打分：只在前向邻居上做 softmax
++        q = self.attn_query(hidden_state)                          # [B, T, latent]
++        k_ = self.attn_key(values)                                 # [B, T, T-1, latent]
++        score = (k_ * q.unsqueeze(2)).sum(dim=-1) / self.attn_scale
++        score = score.masked_fill(~keep, -1e9)
++        weight = torch.softmax(score, dim=-1) * keep.to(values.dtype)
++        values = values * weight.unsqueeze(-1)
++
++        ## 分格：rel 映射到 [0, n*pool_size)；超界的邻居贡献置 0
++        oij = rel / (self.cell_side / self.pool_size) + self.n * self.pool_size / 2
++        range_mask = torch.sum((oij < 0) + (oij >= self.n * self.pool_size), dim=-1) == 0
++        oij = torch.where(range_mask.unsqueeze(-1), oij, torch.zeros_like(oij))
++        values = torch.where(range_mask.unsqueeze(-1), values, torch.zeros_like(values))
++
++        oij = oij.long()
++        oi = (oij[:, :, :, 0] * self.n * self.pool_size + oij[:, :, :, 1])\
++            .view(batch_size * num_tracks, -1)                     # [B*T, T-1]
++        values = values.view(batch_size * num_tracks, -1, self.pooling_dim)
++
++        ## 同格累加（上游在此处是索引赋值 => 后写覆盖先写）
++        occ = self.constant * torch.ones(batch_size * num_tracks,
++                                        self.n ** 2 * self.pool_size ** 2,
++                                        self.pooling_dim, device=device)
++        occ.scatter_add_(1, oi.unsqueeze(-1).expand(-1, -1, self.pooling_dim), values)
++
++        occ = torch.transpose(occ, 1, 2)
++        occ_2d = occ.view(batch_size * num_tracks, -1,
++                          self.n * self.pool_size, self.n * self.pool_size)
++
++        if self.blur_size == 1:
++            occ_blurred = occ_2d
++        else:
++            occ_blurred = torch.nn.functional.avg_pool2d(
++                occ_2d, self.blur_size, 1, int(self.blur_size / 2), count_include_pad=True)
++
++        ## 与上游保持一致：pool_size=1 时 lp_pool2d 等价于逐元素取绝对值
++        occ_summed = torch.nn.functional.lp_pool2d(occ_blurred, 1, self.pool_size)
++        return occ_summed
+ 
+     @staticmethod
+     def normalize(relative, obs, past_obs):
+
+--- a/trajnetbaselines/lstm/trainer.py
++++ b/trajnetbaselines/lstm/trainer.py
+@@ -339,7 +339,9 @@
+                         help='loss objective, L2 loss (L2) and Gaussian loss (pred)')
+     parser.add_argument('--type', default='vanilla',
+                         choices=('vanilla', 'occupancy', 'directional', 'social', 'hiddenstatemlp',
+-                                 'nn', 'attentionmlp', 'nn_lstm', 'traj_pool'),
++                                 'nn', 'attentionmlp', 'nn_lstm', 'traj_pool',
++                                 ## 课堂修改：注意力池化（front_social 只用前 180° 半平面的邻居）
++                                 'attn_social', 'front_social'),
+                         help='type of interaction encoder')
+     parser.add_argument('--sample', default=1.0, type=float,
+                         help='sample ratio when loading train/val scenes')
