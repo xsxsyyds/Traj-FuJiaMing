@@ -1,0 +1,176 @@
+[
+  {
+    "checkpoint": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_social_baseline.pkl",
+    "label": "social/baseline",
+    "type": "social",
+    "output_name": "baseline",
+    "params_total": 25777,
+    "params_trainable": 25777,
+    "params_pool": 4392,
+    "training": {
+      "elapsed_seconds": 43.9949115,
+      "torch": "1.12.1+cpu",
+      "numpy": "1.26.4",
+      "device": "CPU",
+      "threads": 2
+    },
+    "metrics": {
+      "val": {
+        "model": {
+          "ADE": 0.5536813735961914,
+          "FDE": 1.0655676126480103,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.23733101785182953,
+          "FDE": 0.4491218328475952
+        }
+      },
+      "test": {
+        "model": {
+          "ADE": 0.7249199151992798,
+          "FDE": 1.3950012922286987,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.12512816488742828,
+          "FDE": 0.2338729053735733
+        }
+      }
+    },
+    "config": {
+      "path": "circle_classroom",
+      "type": "social",
+      "epochs": "10",
+      "obs_length": "8",
+      "pred_length": "12",
+      "batch_size": "2",
+      "hidden-dim": "32",
+      "coordinate-embedding-dim": "16",
+      "pool_dim": "32",
+      "latent_dim": "8",
+      "n": "4",
+      "cell_side": "1",
+      "save_every": "1",
+      "disable-cuda": "--seed",
+      "seed": "42",
+      "output": "baseline"
+    }
+  },
+  {
+    "checkpoint": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_attn_social_baseline.pkl",
+    "label": "attn/social_baseline",
+    "type": "attn",
+    "output_name": "social_baseline",
+    "params_total": 26097,
+    "params_trainable": 26097,
+    "params_pool": 4712,
+    "training": {
+      "elapsed_seconds": 57.0035143,
+      "torch": "1.12.1+cpu",
+      "numpy": "1.26.4",
+      "device": "CPU",
+      "threads": 2
+    },
+    "metrics": {
+      "val": {
+        "model": {
+          "ADE": 0.4678575098514557,
+          "FDE": 0.9169934391975403,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.23733101785182953,
+          "FDE": 0.4491218328475952
+        }
+      },
+      "test": {
+        "model": {
+          "ADE": 0.6144565343856812,
+          "FDE": 1.1948899030685425,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.12512816488742828,
+          "FDE": 0.2338729053735733
+        }
+      }
+    },
+    "config": {
+      "path": "circle_classroom",
+      "type": "attn_social",
+      "epochs": "10",
+      "obs_length": "8",
+      "pred_length": "12",
+      "batch_size": "2",
+      "hidden-dim": "32",
+      "coordinate-embedding-dim": "16",
+      "pool_dim": "32",
+      "latent_dim": "8",
+      "n": "4",
+      "cell_side": "1",
+      "save_every": "1",
+      "disable-cuda": "--seed",
+      "seed": "42",
+      "output": "baseline"
+    }
+  },
+  {
+    "checkpoint": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_front_social_baseline.pkl",
+    "label": "front/social_baseline",
+    "type": "front",
+    "output_name": "social_baseline",
+    "params_total": 26097,
+    "params_trainable": 26097,
+    "params_pool": 4712,
+    "training": {
+      "elapsed_seconds": 50.349903600000005,
+      "torch": "1.12.1+cpu",
+      "numpy": "1.26.4",
+      "device": "CPU",
+      "threads": 2
+    },
+    "metrics": {
+      "val": {
+        "model": {
+          "ADE": 0.48804134130477905,
+          "FDE": 0.9502692222595215,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.23733101785182953,
+          "FDE": 0.4491218328475952
+        }
+      },
+      "test": {
+        "model": {
+          "ADE": 0.6677860617637634,
+          "FDE": 1.3088061809539795,
+          "scenes": 12
+        },
+        "constant_velocity": {
+          "ADE": 0.12512816488742828,
+          "FDE": 0.2338729053735733
+        }
+      }
+    },
+    "config": {
+      "path": "circle_classroom",
+      "type": "front_social",
+      "epochs": "10",
+      "obs_length": "8",
+      "pred_length": "12",
+      "batch_size": "2",
+      "hidden-dim": "32",
+      "coordinate-embedding-dim": "16",
+      "pool_dim": "32",
+      "latent_dim": "8",
+      "n": "4",
+      "cell_side": "1",
+      "save_every": "1",
+      "disable-cuda": "--seed",
+      "seed": "42",
+      "output": "baseline"
+    }
+  }
+]

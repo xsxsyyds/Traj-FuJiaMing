@@ -1,0 +1,32 @@
+[
+  {
+    "label": "baseline",
+    "color": "#C00000",
+    "ade": 0.523942768573761,
+    "fde": 0.9873654842376709,
+    "cv_ade": 0.3685370683670044,
+    "cv_fde": 0.739107608795166,
+    "params": 25777,
+    "ckpt": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_social_baseline.pkl"
+  },
+  {
+    "label": "attn_social",
+    "color": "#1F4E79",
+    "ade": 0.3816240131855011,
+    "fde": 0.7413938641548157,
+    "cv_ade": 0.3685370683670044,
+    "cv_fde": 0.739107608795166,
+    "params": 26097,
+    "ckpt": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_attn_social_baseline.pkl"
+  },
+  {
+    "label": "front_social",
+    "color": "#2A9D8F",
+    "ade": 0.4007905423641205,
+    "fde": 0.7664856910705566,
+    "cv_ade": 0.3685370683670044,
+    "cv_fde": 0.739107608795166,
+    "params": 26097,
+    "ckpt": "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week03\\results\\lstm_front_social_baseline.pkl"
+  }
+]

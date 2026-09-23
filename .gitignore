@@ -23,3 +23,12 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
+
+# week03：训练输出体积大、且可由命令重跑生成，不入库。
+# OUTPUT_BLOCK/ 下含逐轮中间权重与 .state，体积最大，整目录排除。
+week03/**/OUTPUT_BLOCK/
+week03/**/*.state
+
+# week03：-modified 只跟踪**源码**。
+# DATA_BLOCK/ 可由 prepare_classroom.py 从 classroom/raw/ 一键重建（原版已跟踪同样的数据）。
+week03/Week3-TrajNet++-modified/DATA_BLOCK/
