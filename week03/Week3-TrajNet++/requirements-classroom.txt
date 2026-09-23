@@ -1,0 +1,13 @@
+# Python 3.9 or 3.10, CPU classroom configuration.
+# Install this file, not upstream setup.py (which pins torch 1.10.0).
+torch==1.12.1
+numpy==1.26.4
+scipy==1.13.1
+matplotlib==3.9.4
+pandas==2.3.3
+joblib==1.1.0
+tqdm==4.67.3
+python-json-logger==2.0.7
+trajnetplusplustools==0.3.0
+pykalman==0.9.5
+pysparkling==0.6.2
