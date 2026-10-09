@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """week04 课堂作业：用 NGSIM I-80 车辆轨迹绘制交通流基本图（流量—密度图）。
 
-对应 PPT 三步：
+分析流程分三个环节：
   1 固定分析范围 —— 同一方向、同一车道、100 米路段；统一单位，检查缺失与重复
   2 绘制基本图   —— 用多种方法算密度与流量，画两张同坐标范围的流量—密度图
   3 解释差异     —— 比较点云覆盖、散布与趋势
@@ -12,7 +12,7 @@
 
 计算口径
 --------
-A. Edie 广义定义（PPT 计算提示）：
+A. Edie 广义定义：
     k = Σt_i / (L · T)      q = Σd_i / (L · T)      v = q / k
 其中 t_i 为第 i 辆车在窗口内的**停留时间**，d_i 为其在窗口内的**纵向行驶距离**，
 L = 100 m 为路段长度，T 为窗口长度。
@@ -89,7 +89,7 @@ def load_and_check(csv: Path, lane: int, y0: float, y1: float):
 
 
 def lane_coverage(df: pd.DataFrame, lane: int):
-    """所选车道在所选路段的覆盖情况（PPT 第 1 步要求先看）。"""
+    """所选车道在所选路段的覆盖情况。"""
     sub = df[df.lane_id == lane]
     y = sub.local_y_m.values
     out = {
