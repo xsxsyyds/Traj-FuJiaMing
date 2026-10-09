@@ -1,0 +1,252 @@
+{
+  "checks": {
+    "file": "E:\\jiaotongjianmo\\week04\\第4周_NGSIM-I80_课堂数据\\NGSIM_I80_20050413_1600-1615_SI.csv",
+    "file_mb": 99.3,
+    "rows": 1226650,
+    "columns": [
+      "vehicle_id",
+      "frame_id",
+      "time_s",
+      "local_x_m",
+      "local_y_m",
+      "vehicle_length_m",
+      "vehicle_class",
+      "speed_m_s",
+      "acceleration_m_s2",
+      "lane_id"
+    ],
+    "vehicles_total": 2052,
+    "missing_total": 0,
+    "dup_full_rows": 0,
+    "dup_vehicle_frame": 0,
+    "time_s": [
+      0.0,
+      899.9
+    ],
+    "n_timestamps": 9000,
+    "dt_median_s": 0.10000000000002274,
+    "local_y_m": [
+      0.0,
+      535.683414
+    ],
+    "local_x_m": [
+      0.035662,
+      28.54732
+    ],
+    "lane_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "segment": {
+      "lane": 6,
+      "y0": 158.0,
+      "y1": 258.0,
+      "length_m": 100.0
+    }
+  },
+  "lane_coverage": {
+    "rows_in_lane": 222067,
+    "vehicles_in_lane": 529,
+    "y_span_m": [
+      3.27112,
+      535.211278
+    ],
+    "lane_speed_median_m_s": 7.284735
+  },
+  "convention": {
+    "A_edie": "相邻两帧都在所选车道且都在所选路段内才计入；贡献 Δt 与 Δy；跨窗口边界按时间比例拆分；k=Σt/(L·T)，q=Σd/(L·T)，v=q/k",
+    "B_detector": "在路段中点设虚拟断面，统计跨越次数；q=N_cross/T；v_s=跨越车辆速度的调和平均；k=q/v_s",
+    "time_colour": "点色由窗口起始时间决定（浅→深），不使用时间顺序连线"
+  },
+  "method_A_edie": {
+    "10s": {
+      "T_s": 10.0,
+      "n_windows": 90,
+      "k_veh_per_km": [
+        4.400000000000006,
+        102.0
+      ],
+      "k_median": 72.75,
+      "k_iqr": [
+        56.42500000000002,
+        81.17499999999998
+      ],
+      "q_veh_per_h": [
+        236.27887560000005,
+        2000.2159619999984
+      ],
+      "q_median": 1372.6879524000014,
+      "q_iqr": [
+        1158.8150339999993,
+        1621.982791800001
+      ],
+      "v_km_per_h_median": 20.945358269374303,
+      "n_per_window": [
+        3.0,
+        15.0
+      ],
+      "info": {
+        "T_s": 10.0,
+        "n_windows": 90,
+        "intervals": 60055,
+        "intervals_split": 0,
+        "negative_dy_intervals": 0
+      }
+    },
+    "60s": {
+      "T_s": 60.0,
+      "n_windows": 15,
+      "k_veh_per_km": [
+        39.783333333333324,
+        82.46666666666661
+      ],
+      "k_median": 74.96666666666663,
+      "k_iqr": [
+        57.5666666666667,
+        77.04166666666967
+      ],
+      "q_veh_per_h": [
+        974.256010200003,
+        1596.0408462000069
+      ],
+      "q_median": 1402.3206101999979,
+      "q_iqr": [
+        1281.2624024999986,
+        1510.1586708000027
+      ],
+      "v_km_per_h_median": 18.79342878701641,
+      "n_per_window": [
+        26.0,
+        43.0
+      ],
+      "info": {
+        "T_s": 60.0,
+        "n_windows": 15,
+        "intervals": 60055,
+        "intervals_split": 0,
+        "negative_dy_intervals": 0
+      }
+    }
+  },
+  "method_B_detector": {
+    "10s": {
+      "T_s": 10.0,
+      "n_windows": 90,
+      "k_veh_per_km": [
+        0.0,
+        180.10232963116493
+      ],
+      "k_median": 82.92968690563208,
+      "k_iqr": [
+        61.208022308525216,
+        100.50900226851869
+      ],
+      "q_veh_per_h": [
+        0.0,
+        2520.0
+      ],
+      "q_median": 1800.0,
+      "q_iqr": [
+        1440.0,
+        2160.0
+      ],
+      "v_km_per_h_median": 21.768449845641598,
+      "n_per_window": [
+        0.0,
+        7.0
+      ],
+      "info": {
+        "T_s": 10.0,
+        "n_windows": 90,
+        "y_detector_m": 208.0,
+        "crossings_total": 421,
+        "windows_zero_crossing": 1
+      }
+    },
+    "60s": {
+      "T_s": 60.0,
+      "n_windows": 15,
+      "k_veh_per_km": [
+        46.82634900564214,
+        106.78170778851425
+      ],
+      "k_median": 85.29311211872351,
+      "k_iqr": [
+        61.57798004518557,
+        97.04530507763455
+      ],
+      "q_veh_per_h": [
+        1200.0,
+        2040.0
+      ],
+      "q_median": 1680.0,
+      "q_iqr": [
+        1620.0,
+        1860.0000000000002
+      ],
+      "v_km_per_h_median": 19.78791723276695,
+      "n_per_window": [
+        20.0,
+        34.0
+      ],
+      "info": {
+        "T_s": 60.0,
+        "n_windows": 15,
+        "y_detector_m": 208.0,
+        "crossings_total": 421,
+        "windows_zero_crossing": 0
+      }
+    }
+  },
+  "A_vs_B": {
+    "sum_d_m": 33876.307851000005,
+    "crossings": 421,
+    "q_A_mean_veh_per_h": 1355.0523140400003,
+    "q_B_mean_veh_per_h": 1684.0,
+    "q_B_over_q_A": 1.2427564475199218,
+    "mean_run_length_m": 80.46628943230405,
+    "L_over_mean_run": 1.2427564475199218,
+    "y_detector_m": 208.0
+  },
+  "figures": [
+    "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week04\\results\\fd_10s_vs_60s.png",
+    "E:\\jiaotongjianmo\\SYSU-Code-FJM\\week04\\results\\fd_detector_10s_vs_60s.png"
+  ],
+  "axes": {
+    "A": [
+      [
+        0.0,
+        120.0
+      ],
+      [
+        0.0,
+        2400.0
+      ]
+    ],
+    "B": [
+      [
+        0.0,
+        200.0
+      ],
+      [
+        0.0,
+        2800.0
+      ]
+    ],
+    "A_and_B": [
+      [
+        0.0,
+        200.0
+      ],
+      [
+        0.0,
+        2800.0
+      ]
+    ]
+  }
+}
