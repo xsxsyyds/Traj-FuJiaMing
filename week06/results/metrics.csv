@@ -1,0 +1,7 @@
+﻿name,width,arrived_ped,arrived_car,t_all_arrived,collision_frames,collision_pairs,boundary_max_intrusion,mean_speed_ped,check_dt
+corridor_wide,5.0,6,1,47.660000000000004,0,0,0.0,1.2588086001170884,0.01
+corridor_narrow,3.5,6,1,47.82,0,0,0.0,1.2547276284866815,0.01
+corridor_blocked,2.2,0,0,,0,0,0.0,0.07415669613756949,0.01
+corridor_no_rule,3.0,0,0,,0,0,0.0,0.07122584759102621,0.01
+corridor_rule,3.0,1,0,,29,29,0.003691107149549566,0.12462444520747977,0.01
+circle,,0,0,,0,0,0.0,0.27955666445840055,0.01
