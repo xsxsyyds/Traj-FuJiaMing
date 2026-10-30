@@ -138,12 +138,14 @@ def orca_halfspace(rel_pos, rel_vel, combined_radius, tau, dt, v_self,
         return None
 
     if dist <= R:
-        # 已经重叠：用 1/dt 的速度锥把两机强行推开
-        w = u - p / dt
+        # 已经进入安全半径时仍只使用 ORCA 速度规划。
+        # 不做位置修正、反弹或其它实体碰撞响应；下一步位置只由规划速度积分得到。
+        # 使用 tau 时间窗而不是 1/dt 的硬推开速度，便于如实统计风险/碰撞结果。
+        w = u - p / max(float(tau), EPS)
         wl = np.linalg.norm(w)
         if wl < EPS:
             return None
-        du = (R / dt - wl) * (w / wl)
+        du = (R / max(float(tau), EPS) - wl) * (w / wl)
     else:
         a = p / dist                       # 径向单位向量
         s = float(u @ a)

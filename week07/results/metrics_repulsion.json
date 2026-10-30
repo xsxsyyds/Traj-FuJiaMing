@@ -12,6 +12,10 @@
   "arrival_rate": 1.0,
   "min_separation": 0.5825966129674991,
   "violating_pairs": 17,
+  "collision_pair_count": 17,
+  "collision_event_count": 17,
+  "collision_frames": 56,
+  "peak_collision_pairs": 3,
   "violating_pair_ratio": 0.0034343434343434343,
   "t_all_arrive": 23.6,
   "mean_path": 22.90124091572571,
@@ -28,5 +32,6 @@
     "d_ideal_hex": 3.8092512274558294,
     "nn_mean_over_ideal": 0.9349625570377744,
     "radius_error": 1.7763568394002505e-15
-  }
+  },
+  "collision_samples": 72
 }

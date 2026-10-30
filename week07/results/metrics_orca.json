@@ -8,14 +8,18 @@
   "tau": 5.0,
   "t_end": 120.0,
   "margin": 0.05,
-  "arrived": 3,
-  "arrival_rate": 0.03,
-  "min_separation": 0.19811598300192498,
-  "violating_pairs": 3348,
-  "violating_pair_ratio": 0.6763636363636364,
+  "arrived": 0,
+  "arrival_rate": 0.0,
+  "min_separation": 0.008274322375788139,
+  "violating_pairs": 3570,
+  "collision_pair_count": 3570,
+  "collision_event_count": 3570,
+  "collision_frames": 1170,
+  "peak_collision_pairs": 2511,
+  "violating_pair_ratio": 0.7212121212121212,
   "t_all_arrive": null,
-  "mean_path": 164.33604129555926,
-  "std_path": 8.443076661630245,
+  "mean_path": 131.86376765003934,
+  "std_path": 2.5880811247771387,
   "theoretical_path": 20.0,
   "first_violation_time": 3.1,
   "uniformity": {
@@ -28,5 +32,6 @@
     "d_ideal_hex": 3.8092512274558294,
     "nn_mean_over_ideal": 0.9349625570377744,
     "radius_error": 1.7763568394002505e-15
-  }
+  },
+  "collision_samples": 904406
 }

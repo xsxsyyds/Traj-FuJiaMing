@@ -95,6 +95,10 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
 
     steps = int(round(t_end / dt))
     traj, arrived_hist = [], []
+    collision_count_hist = []
+    collision_event_hist = []
+    collision_pairs_seen = set()
+    collision_event_count = 0
     first_violation = None
 
     def pref_velocity():
@@ -153,8 +157,15 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
 
         dd = np.linalg.norm(p[:, None, :] - p[None, :, :], axis=2)
         np.fill_diagonal(dd, np.inf)
-        if first_violation is None and dd.min() < MIN_SEP:
+        risk_mask = np.triu(dd < MIN_SEP, 1)
+        risk_pairs = set(zip(*np.where(risk_mask)))
+        new_risk_pairs = risk_pairs - collision_pairs_seen
+        collision_event_count += len(new_risk_pairs)
+        collision_pairs_seen.update(risk_pairs)
+        if first_violation is None and risk_pairs:
             first_violation = (k + 1) * dt
+        collision_count_hist.append(int(len(risk_pairs)))
+        collision_event_hist.append(int(collision_event_count))
 
         if k % record_every == 0:
             traj.append(p.copy())
@@ -194,6 +205,11 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         arrival_rate=float(arrived_final / n),
         min_separation=float(min_sep_all),
         violating_pairs=violating,
+        collision_pair_count=violating,
+        collision_event_count=int(collision_event_count),
+        collision_samples=int(np.sum(collision_count_hist)),
+        collision_frames=int(np.sum(np.asarray(collision_count_hist) > 0)),
+        peak_collision_pairs=int(np.max(collision_count_hist) if collision_count_hist else 0),
         violating_pair_ratio=float(violating / len(iu[0])),
         t_all_arrive=t_all,
         mean_path=float(path_len.mean()),
@@ -202,6 +218,8 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         first_violation_time=first_violation,
         t_arrive=t_arrive,
         path_len=path_len,
+        collision_count_hist=np.asarray(collision_count_hist, dtype=int),
+        collision_event_hist=np.asarray(collision_event_hist, dtype=int),
         uniformity=uniform,
     )
     return dict(traj=traj, t=np.arange(T) * dt * record_every,
@@ -236,7 +254,9 @@ def main():
             traj=out["traj"], t=out["t"], p0=out["p0"], goal=out["goal"],
             arrived=out["arrived_hist"],
             colors=region_colors(out["p0"]),
-            t_arrive=mt["t_arrive"], path_len=mt["path_len"])
+            t_arrive=mt["t_arrive"], path_len=mt["path_len"],
+            collision_count=mt["collision_count_hist"],
+            collision_events=mt["collision_event_hist"])
         mt_save = {k: v for k, v in mt.items() if not isinstance(v, np.ndarray)}
         (RESULTS / f"metrics_{m}{args.tag}.json").write_text(
             json.dumps(mt_save, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -253,7 +273,9 @@ def main():
         w.writerow(["model", "arrived", "n", "arrival_rate",
                     "min_separation_m", "violating_pairs",
                     "violating_pair_ratio", "t_all_arrive_s",
-                    "mean_path_m", "std_path_m", "first_violation_s"])
+                    "mean_path_m", "std_path_m", "first_violation_s",
+                    "collision_event_count", "collision_samples",
+                    "collision_frames", "peak_collision_pairs"])
         for r in rows:
             w.writerow([r["model"], r["arrived"], r["n"],
                         f"{r['arrival_rate']:.3f}",
@@ -263,7 +285,9 @@ def main():
                         "" if r["t_all_arrive"] is None else f"{r['t_all_arrive']:.1f}",
                         f"{r['mean_path']:.2f}", f"{r['std_path']:.2f}",
                         "" if r["first_violation_time"] is None
-                        else f"{r['first_violation_time']:.1f}"])
+                        else f"{r['first_violation_time']:.1f}",
+                        r["collision_event_count"], r["collision_samples"],
+                        r["collision_frames"], r["peak_collision_pairs"]])
     print("已写出", path)
 
 

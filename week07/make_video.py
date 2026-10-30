@@ -56,6 +56,8 @@ def main():
     zd = np.load(RESULTS / "traj_direct.npz")
     traj_o, traj_d = np.asarray(zo["traj"]), np.asarray(zd["traj"])
     arrived_o, arrived_d = np.asarray(zo["arrived"]), np.asarray(zd["arrived"])
+    risk_o = np.asarray(zo["collision_count"]) if "collision_count" in zo else np.zeros(To if 'To' in locals() else len(traj_o), dtype=int)
+    risk_d = np.asarray(zd["collision_count"]) if "collision_count" in zd else np.zeros(len(traj_d), dtype=int)
     To, Td = len(traj_o), len(traj_d)
     print("ORCA frames", To, " Direct frames", Td)
 
@@ -108,8 +110,10 @@ def main():
             t = k * 0.1
             ao = int(arrived_o[ko].sum())
             ad = int(arrived_d[kd].sum())
-            txt_o.set_text(f"t = {t:4.1f} s   arrived {ao}/100")
-            txt_d.set_text(f"t = {t:4.1f} s   arrived {ad}/100")
+            ro = int(risk_o[min(ko, len(risk_o) - 1)])
+            rd = int(risk_d[min(kd, len(risk_d) - 1)])
+            txt_o.set_text(f"t = {t:4.1f} s   arrived {ao}/100   risky pairs {ro}")
+            txt_d.set_text(f"t = {t:4.1f} s   arrived {ad}/100   risky pairs {rd}")
             writer.grab_frame()
             if k % 40 == 0:
                 print(f"  frame {k}/{n}", flush=True)

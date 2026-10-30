@@ -1,4 +1,4 @@
-﻿model,arrived,n,arrival_rate,min_separation_m,violating_pairs,violating_pair_ratio,t_all_arrive_s,mean_path_m,std_path_m,first_violation_s
-orca,3,100,0.030,0.1981,3348,0.6764,,164.34,8.44,3.1
-direct,100,100,1.000,0.0181,1471,0.2972,12.2,19.36,0.03,2.2
-repulsion,100,100,1.000,0.5826,17,0.0034,23.6,22.90,1.43,6.0
+﻿model,arrived,n,arrival_rate,min_separation_m,violating_pairs,violating_pair_ratio,t_all_arrive_s,mean_path_m,std_path_m,first_violation_s,collision_event_count,collision_samples,collision_frames,peak_collision_pairs
+orca,0,100,0.000,0.0083,3570,0.7212,,131.86,2.59,3.1,3570,904406,1170,2511
+direct,100,100,1.000,0.0181,1471,0.2972,12.2,19.36,0.03,2.2,1471,10797,82,648
+repulsion,100,100,1.000,0.5826,17,0.0034,23.6,22.90,1.43,6.0,17,72,56,3

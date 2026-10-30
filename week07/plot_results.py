@@ -156,7 +156,7 @@ def fig3():
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Minimum pairwise separation [m]")
     ax.set_ylim(0, 6)
-    ax.set_xlim(0, 25)
+    ax.set_xlim(0, max(float(np.max(load(m)["t"])) for m in MODELS))
     ax.legend(fontsize=9, loc="upper right")
     fig.suptitle("三类模型在冲突最密集阶段的最近距离", fontsize=13.5, y=1.02)
     fig.savefig(RESULTS / "fig3_min_separation.png")
@@ -164,7 +164,57 @@ def fig3():
     print("写出 fig3_min_separation.png")
 
 
+def fig4_collision_metrics():
+    """碰撞风险统计：机对数、风险帧数和峰值同时风险机对。"""
+    ms = {m: json.loads((RESULTS / f"metrics_{m}.json").read_text(encoding="utf-8"))
+          for m in MODELS}
+    x = np.arange(len(MODELS))
+    fig, axes = plt.subplots(1, 3, figsize=(13.2, 4.0))
+    labels = [LABEL[m] for m in MODELS]
+    colors = [COLOR[m] for m in MODELS]
+    specs = [
+        ("collision_pair_count", "Risky pairs", "Distinct pairs with distance < 1 m"),
+        ("collision_frames", "Risk frames", "Frames with at least one risky pair"),
+        ("peak_collision_pairs", "Peak simultaneous risk", "Maximum risky pairs in one frame"),
+    ]
+    for ax, (key, title, ylabel) in zip(axes, specs):
+        vals = [ms[m].get(key, 0) for m in MODELS]
+        bars = ax.bar(x, vals, 0.58, color=colors, edgecolor="white")
+        ax.bar_label(bars, fmt="{:.0f}", padding=2, fontsize=9)
+        ax.set_xticks(x, labels)
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+    fig.suptitle("三维仿真中的碰撞风险统计（仅记录，不施加实体碰撞响应）", fontsize=13.5, y=1.04)
+    fig.savefig(RESULTS / "fig4_collision_metrics.png")
+    plt.close(fig)
+    print("写出 fig4_collision_metrics.png")
+
+
+def fig5_collision_timeline():
+    """逐帧风险机对数，展示风险发生的时间段。"""
+    fig, ax = plt.subplots(figsize=(9.0, 4.2))
+    for m in MODELS:
+        z = load(m)
+        t = z["t"]
+        if "collision_count" in z:
+            c = z["collision_count"]
+        else:
+            c = np.zeros(len(t))
+        ax.plot(t[:len(c)], c, lw=1.6, color=COLOR[m], label=LABEL[m])
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Risky pairs (distance < 1 m)")
+    ax.set_title("碰撞风险随时间变化（不改变规划轨迹）")
+    ax.legend()
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    fig.savefig(RESULTS / "fig5_collision_timeline.png")
+    plt.close(fig)
+    print("写出 fig5_collision_timeline.png")
+
+
 if __name__ == "__main__":
     fig1()
     fig2()
     fig3()
+    fig4_collision_metrics()
+    fig5_collision_timeline()
