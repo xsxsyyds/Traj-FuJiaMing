@@ -1,0 +1,18 @@
+{
+  "model": "direct",
+  "n": 100,
+  "radius": 10.0,
+  "vmax": 2.0,
+  "dt": 0.1,
+  "tau": 5.0,
+  "t_end": 120.0,
+  "arrived": 100,
+  "arrival_rate": 1.0,
+  "min_separation": 0.022490152859460825,
+  "violating_pairs": 286,
+  "violating_pair_ratio": 0.057777777777777775,
+  "t_all_arrive": 15.3,
+  "mean_path": 30.599999999999913,
+  "std_path": 1.069950908059212e-14,
+  "first_violation_time": 0.7000000000000001
+}
