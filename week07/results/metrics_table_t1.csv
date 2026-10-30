@@ -1,0 +1,2 @@
+﻿model,arrived,n,arrival_rate,min_separation_m,violating_pairs,violating_pair_ratio,t_all_arrive_s,mean_path_m,std_path_m,first_violation_s
+orca,0,20,0.000,0.4926,190,1.0000,,99.70,1.29,4.2

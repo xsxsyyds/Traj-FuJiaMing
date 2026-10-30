@@ -1,0 +1,32 @@
+{
+  "model": "direct",
+  "motion_space": "3d_free",
+  "n": 20,
+  "radius": 10.0,
+  "vmax": 2.0,
+  "dt": 0.1,
+  "tau": 5.0,
+  "t_end": 40.0,
+  "margin": 0.05,
+  "arrived": 20,
+  "arrival_rate": 1.0,
+  "min_separation": 1.9108126731731617e-15,
+  "violating_pairs": 190,
+  "violating_pair_ratio": 1.0,
+  "t_all_arrive": 9.700000000000001,
+  "mean_path": 19.04340619999997,
+  "std_path": 6.598872780119333e-15,
+  "theoretical_path": 20.0,
+  "first_violation_time": 4.4,
+  "uniformity": {
+    "nn_mean": 7.635252354562864,
+    "nn_std": 0.3074095388669498,
+    "nn_cv": 0.04026187015066246,
+    "nn_min": 7.398002456935212,
+    "nn_max": 8.29523913768744,
+    "nn_max_over_min": 1.1212809384661828,
+    "d_ideal_hex": 8.517744687965749,
+    "nn_mean_over_ideal": 0.8963936622038332,
+    "radius_error": 1.7763568394002505e-15
+  }
+}
