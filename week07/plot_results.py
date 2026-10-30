@@ -74,13 +74,14 @@ def fig1():
         draw_sphere(ax)
         z = load(m)
         traj = z["traj"]
+        zcolors = z["colors"] if "colors" in z else [COLOR[m]] * traj.shape[1]
         for i in range(traj.shape[1]):
             ax.plot(traj[:, i, 0], traj[:, i, 1], traj[:, i, 2],
-                    color=COLOR[m], lw=0.45, alpha=0.35)
+                    color=zcolors[i], lw=0.45, alpha=0.48)
         ax.scatter(traj[0, :, 0], traj[0, :, 1], traj[0, :, 2],
                    s=6, color="#555555", depthshade=False)
         ax.scatter(traj[-1, :, 0], traj[-1, :, 1], traj[-1, :, 2],
-                   s=10, color=COLOR[m], edgecolor="white", linewidth=0.3,
+                   s=10, color=zcolors, edgecolor="white", linewidth=0.3,
                    depthshade=False)
         style3d(ax, f"{LABEL[m]}（{traj.shape[1]} 架）")
     fig.subplots_adjust(left=0.085, right=0.955, bottom=0.06, top=0.88,

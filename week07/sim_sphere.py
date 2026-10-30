@@ -1,31 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-三维球面对趾场景：100 架无人机同时飞向各自的对趾点。
+三维球面对趾场景：100 架无人机从球面出发，直线穿过球心飞向对趾点。
+
+与"贴球面飞"不同，这里是**三维自由空间**：
+    起点  均匀分布在半径 R 的球面上
+    终点  关于球心对称的点  goal = -p0
+    轨迹  两点之间的直线段（穿过球体内部），不施加任何边界约束
 
 场景参数（按课堂要求）
 ----------------------
-    无人机数量   N = 100，Fibonacci 球面均匀分布
-    球半径       R = 10 m（题目未给，取与 week02 圆环同量级）
-    安全半径     0.5 m  →  任意两机间隔 ≥ 1 m
-    最大速度     vmax = 2 m/s
-    时间步长     Δt = 0.1 s
-    ORCA 时间窗  τ = 5 s
-    初速         0
-    终止         距目标 ≤ 1 m 即停留
-    更新方式     同步更新（先算完所有人再一起动）
-    限时         120 s
+    N = 100，R = 10 m，安全半径 0.5 m（间隔 >= 1 m）
+    vmax = 2 m/s，Δt = 0.1 s，τ = 5 s，初速 0
+    距目标 <= 1 m 即停留，限时 120 s，同步更新
 
-对比模型
---------
-    orca       球面 ORCA（切平面 + RVO2 线性规划）
-    direct     直接朝目标飞（不做任何避让）
-    repulsion  简单排斥场（社会力式的速度层修正）
-
-输出
-----
-    results/traj_<model>.npz     轨迹与到达信息
-    results/metrics_<model>.json 五项指标
-    results/metrics_table.csv    汇总表
+对比模型：orca / direct（不避让）/ repulsion（排斥场）
 """
 
 from __future__ import annotations
@@ -44,7 +32,7 @@ RESULTS.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(HERE))
 
 from orca3d import (  # noqa: E402
-    uniform_sphere, goal_direction, solve_velocity, nn_stats,
+    uniform_sphere, nn_stats, solve_velocity, region_colors,
 )
 
 # ---- 场景参数 ----
@@ -54,139 +42,117 @@ V_MAX = 2.0
 DT = 0.1
 TAU = 5.0
 T_END = 120.0
-SAFE_RADIUS = 0.5          # 单机安全半径
-MIN_SEP = 2 * SAFE_RADIUS  # 最小允许间隔
-#: ORCA 约束里额外留出的余量。理论上 ORCA 能保证恰好 1.0 m，但离散时间步、
-#: 切平面投影、以及偶发的 LP 不可行都会吃掉几毫米。留 2 cm 后实测最小间隔
-#: 稳定在 1.0 m 以上；**统计口径仍然是 1.0 m**，这个余量不参与评价。
-ORCA_MARGIN = 0.05
-ORCA_RADIUS = SAFE_RADIUS + ORCA_MARGIN
+SAFE_RADIUS = 0.5
+MIN_SEP = 2 * SAFE_RADIUS
 ARRIVE_TOL = 1.0
-NEIGHBOR_DIST = 20.0       # 球半径 10 → 20 m 覆盖全对趾，等于"看所有人"
-MAX_NEIGHBORS = 40
+NEIGHBOR_DIST = 12.0       # 三维空间里只考虑 12 m 内的邻居
+MAX_NEIGHBORS = 24
+#: ORCA 约束余量：理论 1.0 m，离散化/投影/不可行都会吃掉几毫米
+ORCA_MARGIN = 0.05
 
 
-# ==========================================================================
-def initial_headings(p, radius, seed=0):
-    """给每架机一个初始切向，用来打破对趾方向的简并。
-
-    球面上从 p 到其对趾点 -p 的最短路径是任意一条过 p 与 -p 的大圆，
-    **方向不唯一**：把 -p 投影到 p 的切平面上恰好得到零向量。
-    所以必须人为指定一个初始切向；这里取确定性的随机切向，
-    既避免"全军同一方向"的伪影，又保证可复现。
-    """
-    rng = np.random.default_rng(seed)
-    n = len(p)
-    h = np.zeros_like(p)
-    for i in range(n):
-        u = p[i] / radius
-        r = rng.normal(size=3)
-        t = r - np.dot(r, u) * u
-        norm = np.linalg.norm(t)
-        h[i] = t / norm if norm > 1e-9 else np.array([0.0, 0.0, 0.0])
-    return h
-
-
-def _preferred(p, goal, vmax, radius, heading0):
-    pref = np.zeros_like(p)
-    for i in range(len(p)):
-        d = goal_direction(p[i], goal[i], radius, heading0[i])
-        pref[i] = vmax * d
-    return pref
-
-
-def _repulsion(p, v, arr, vmax):
+def _repulsion(p, v, arr):
     """简单排斥场：在期望速度上叠加邻居的指数排斥。"""
-    n = len(p)
     diff = p[:, None, :] - p[None, :, :]
     dist = np.linalg.norm(diff, axis=2)
     np.fill_diagonal(dist, np.inf)
-    # 只算 3 m 内的
     w = 1.6 * np.exp(-(dist - MIN_SEP) / 1.2)
     w[dist > 3.0] = 0.0
-    w[:, arr] = 0.0                     # 已到达的邻居速度为 0，仍算障碍
+    w[:, arr] = 0.0
     safe = np.where(np.isfinite(dist), dist, 1.0)
     unit = diff / safe[..., None]
-    rep = (w[..., None] * unit).sum(axis=1)
-    return rep
+    return (w[..., None] * unit).sum(axis=1)
 
 
 # ==========================================================================
 def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         t_end=T_END, neighbor_dist=NEIGHBOR_DIST, max_neighbors=MAX_NEIGHBORS,
         record_every=1, verbose=True, margin=ORCA_MARGIN):
-    orca_radius = SAFE_RADIUS + margin
-    # 起点：球面上均匀分布（Fibonacci 播种 + 排斥松弛）
+    # 起点：球面均匀分布；终点：关于球心对称的点
     p = uniform_sphere(n, radius)
-    # 终点：关于球心对称的点（对趾点）
-    goal = -p.copy()
+    p0 = p.copy()
+    goal = -p0.copy()
     v = np.zeros_like(p)
-    heading0 = initial_headings(p, radius, seed=0)
-    uniform = nn_stats(p, radius)
+    uniform = nn_stats(p0, radius)
 
     arrived = np.zeros(n, dtype=bool)
     t_arrive = np.full(n, np.nan)
     path_len = np.zeros(n)
-    n_min_sep = np.full(n, np.inf)      # 每个 agent 的历史最小邻居距离
+
+    # 对称性破缺（两条）：
+    #   ① 侧向偏置——每架机选一个固定的绕行侧，避免全挤在球心那一条线上；
+    #   ② 巡航速度差异——错开到达球心的时刻，避免同时争抢同一空间。
+    # ORCA 在完全对称的对趾构型下会互相"礼让"到绕着球心打转（实测 20 架时
+    # 全部到不了、最小间距 0.16 m），这两条是让场景可解的必要条件。
+    rng = np.random.default_rng(7)
+    goal_dir0 = goal - p0
+    goal_dir0 /= np.maximum(np.linalg.norm(goal_dir0, axis=1, keepdims=True), 1e-9)
+    bias = rng.normal(size=(n, 3))
+    bias -= (bias * goal_dir0).sum(axis=1, keepdims=True) * goal_dir0
+    bias /= np.maximum(np.linalg.norm(bias, axis=1, keepdims=True), 1e-9)
+    BIAS_GAIN = 0.18
+    speed_factor = 0.80 + 0.20 * rng.random(n)      # 0.80 ~ 1.00
 
     steps = int(round(t_end / dt))
-    traj = []
-    arrived_hist = []
+    traj, arrived_hist = [], []
     first_violation = None
 
+    def pref_velocity():
+        """期望速度：朝目标 + 侧向偏置，接近目标时按剩余距离限速。"""
+        d = goal - p
+        dist = np.linalg.norm(d, axis=1, keepdims=True)
+        u = d / np.maximum(dist, 1e-9)
+        out = vmax * speed_factor[:, None] * (u + BIAS_GAIN * bias)
+        sp = np.linalg.norm(out, axis=1, keepdims=True)
+        out = out / np.maximum(sp, 1e-9) * (vmax * speed_factor[:, None])
+        return out * np.clip(dist / 2.0, 0.0, 1.0)
+
     for k in range(steps):
-        pref = _preferred(p, goal, vmax, radius, heading0)
+        pref = pref_velocity()
+        pref[arrived] = 0.0
 
         if model == "direct":
-            new_v = pref
+            new_v = pref.copy()
 
         elif model == "repulsion":
-            new_v = pref + _repulsion(p, v, arrived, vmax)
+            new_v = pref + _repulsion(p, v, arrived)
             sp = np.linalg.norm(new_v, axis=1)
             over = sp > vmax
             new_v[over] = new_v[over] / sp[over, None] * vmax
 
         elif model == "orca":
             new_v = np.zeros_like(p)
-            # 每步算一次全对距离，供邻居筛选
             diff = p[:, None, :] - p[None, :, :]
             dist = np.linalg.norm(diff, axis=2)
             np.fill_diagonal(dist, np.inf)
             for i in range(n):
                 if arrived[i]:
-                    new_v[i] = 0.0
                     continue
                 order = np.argsort(dist[i])
                 cand = [j for j in order[:max_neighbors]
                         if j != i and dist[i, j] < neighbor_dist]
-                neigh = [(p[j], v[j], orca_radius, bool(arrived[j]))
+                neigh = [(p[j], v[j], SAFE_RADIUS, bool(arrived[j]))
                          for j in cand]
-                new_v[i] = solve_velocity(
-                    p[i], v[i], pref[i], neigh, orca_radius,
-                    vmax, tau, dt, neighbor_dist)
+                new_v[i] = solve_velocity(p[i], v[i], pref[i], neigh,
+                                          SAFE_RADIUS, vmax, tau, dt, margin)
         else:
             raise ValueError(model)
 
-        # 已到达的无人机「停留」：任何模型都不再移动
         new_v[arrived] = 0.0
         v = new_v
-        speed = np.linalg.norm(v, axis=1)
-        path_len += speed * dt
-        p = p + v * dt
-        p = radius * p / np.linalg.norm(p, axis=1, keepdims=True)
 
-        # 到达判定
+        path_len += np.linalg.norm(v, axis=1) * dt
+        p = p + v * dt                       # 三维自由空间，无边界约束
+
         d_goal = np.linalg.norm(p - goal, axis=1)
         newly = (~arrived) & (d_goal <= ARRIVE_TOL)
         if newly.any():
             arrived[newly] = True
             t_arrive[newly] = (k + 1) * dt
-        v[arrived] = 0.0
+            v[arrived] = 0.0
 
-        # 最近邻距离跟踪
         dd = np.linalg.norm(p[:, None, :] - p[None, :, :], axis=2)
         np.fill_diagonal(dd, np.inf)
-        n_min_sep = np.minimum(n_min_sep, dd.min(axis=1))
         if first_violation is None and dd.min() < MIN_SEP:
             first_violation = (k + 1) * dt
 
@@ -221,9 +187,9 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
     t_all = float(np.nanmax(t_arrive)) if arrived_final == n else None
 
     metrics = dict(
-        model=model,
+        model=model, motion_space="3d_free",
         n=int(n), radius=float(radius), vmax=float(vmax), dt=float(dt),
-        tau=float(tau), t_end=float(t_end),
+        tau=float(tau), t_end=float(t_end), margin=float(margin),
         arrived=int(arrived_final),
         arrival_rate=float(arrived_final / n),
         min_separation=float(min_sep_all),
@@ -232,13 +198,14 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         t_all_arrive=t_all,
         mean_path=float(path_len.mean()),
         std_path=float(path_len.std()),
+        theoretical_path=2.0 * radius,
         first_violation_time=first_violation,
         t_arrive=t_arrive,
         path_len=path_len,
         uniformity=uniform,
     )
     return dict(traj=traj, t=np.arange(T) * dt * record_every,
-                goal=goal, metrics=metrics,
+                p0=p0, goal=goal, metrics=metrics,
                 arrived_hist=np.stack(arrived_hist))
 
 
@@ -253,26 +220,25 @@ def main():
     ap.add_argument("--radius", type=float, default=RADIUS)
     ap.add_argument("--t-end", type=float, default=T_END)
     ap.add_argument("--tag", default="")
-    ap.add_argument("--margin", type=float, default=ORCA_MARGIN,
-                    help="ORCA 约束的安全余量 [m]，评价口径仍是 1.0 m 间隔")
+    ap.add_argument("--margin", type=float, default=ORCA_MARGIN)
+    ap.add_argument("--tau", type=float, default=TAU)
     args = ap.parse_args()
 
     rows = []
     for m in args.models:
-        print(f"跑 {m} ({args.n} 架, R={args.radius:g}, T={args.t_end:g}s) ...",
-              flush=True)
+        print(f"跑 {m} ({args.n} 架, R={args.radius:g}, T={args.t_end:g}s, "
+              f"tau={args.tau:g}) ...", flush=True)
         out = run(m, n=args.n, radius=args.radius, t_end=args.t_end,
-                  margin=args.margin)
+                  margin=args.margin, tau=args.tau)
         mt = out["metrics"]
-        tag = args.tag
         np.savez_compressed(
-            RESULTS / f"traj_{m}{tag}.npz",
-            traj=out["traj"], t=out["t"], goal=out["goal"],
+            RESULTS / f"traj_{m}{args.tag}.npz",
+            traj=out["traj"], t=out["t"], p0=out["p0"], goal=out["goal"],
             arrived=out["arrived_hist"],
+            colors=region_colors(out["p0"]),
             t_arrive=mt["t_arrive"], path_len=mt["path_len"])
-        mt_save = {k: v for k, v in mt.items()
-                   if not isinstance(v, np.ndarray)}
-        (RESULTS / f"metrics_{m}{tag}.json").write_text(
+        mt_save = {k: v for k, v in mt.items() if not isinstance(v, np.ndarray)}
+        (RESULTS / f"metrics_{m}{args.tag}.json").write_text(
             json.dumps(mt_save, ensure_ascii=False, indent=2), encoding="utf-8")
         rows.append(mt)
         print(f"    到达 {mt['arrived']}/{mt['n']}  "
