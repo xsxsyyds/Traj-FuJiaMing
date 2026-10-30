@@ -44,7 +44,7 @@ RESULTS.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(HERE))
 
 from orca3d import (  # noqa: E402
-    fibonacci_sphere, goal_direction, solve_velocity,
+    uniform_sphere, goal_direction, solve_velocity, nn_stats,
 )
 
 # ---- 场景参数 ----
@@ -114,11 +114,15 @@ def _repulsion(p, v, arr, vmax):
 # ==========================================================================
 def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         t_end=T_END, neighbor_dist=NEIGHBOR_DIST, max_neighbors=MAX_NEIGHBORS,
-        record_every=1, verbose=True):
-    p = fibonacci_sphere(n, radius)
+        record_every=1, verbose=True, margin=ORCA_MARGIN):
+    orca_radius = SAFE_RADIUS + margin
+    # 起点：球面上均匀分布（Fibonacci 播种 + 排斥松弛）
+    p = uniform_sphere(n, radius)
+    # 终点：关于球心对称的点（对趾点）
     goal = -p.copy()
     v = np.zeros_like(p)
     heading0 = initial_headings(p, radius, seed=0)
+    uniform = nn_stats(p, radius)
 
     arrived = np.zeros(n, dtype=bool)
     t_arrive = np.full(n, np.nan)
@@ -155,10 +159,10 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
                 order = np.argsort(dist[i])
                 cand = [j for j in order[:max_neighbors]
                         if j != i and dist[i, j] < neighbor_dist]
-                neigh = [(p[j], v[j], ORCA_RADIUS, bool(arrived[j]))
+                neigh = [(p[j], v[j], orca_radius, bool(arrived[j]))
                          for j in cand]
                 new_v[i] = solve_velocity(
-                    p[i], v[i], pref[i], neigh, ORCA_RADIUS,
+                    p[i], v[i], pref[i], neigh, orca_radius,
                     vmax, tau, dt, neighbor_dist)
         else:
             raise ValueError(model)
@@ -231,6 +235,7 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
         first_violation_time=first_violation,
         t_arrive=t_arrive,
         path_len=path_len,
+        uniformity=uniform,
     )
     return dict(traj=traj, t=np.arange(T) * dt * record_every,
                 goal=goal, metrics=metrics,
@@ -248,13 +253,16 @@ def main():
     ap.add_argument("--radius", type=float, default=RADIUS)
     ap.add_argument("--t-end", type=float, default=T_END)
     ap.add_argument("--tag", default="")
+    ap.add_argument("--margin", type=float, default=ORCA_MARGIN,
+                    help="ORCA 约束的安全余量 [m]，评价口径仍是 1.0 m 间隔")
     args = ap.parse_args()
 
     rows = []
     for m in args.models:
         print(f"跑 {m} ({args.n} 架, R={args.radius:g}, T={args.t_end:g}s) ...",
               flush=True)
-        out = run(m, n=args.n, radius=args.radius, t_end=args.t_end)
+        out = run(m, n=args.n, radius=args.radius, t_end=args.t_end,
+                  margin=args.margin)
         mt = out["metrics"]
         tag = args.tag
         np.savez_compressed(

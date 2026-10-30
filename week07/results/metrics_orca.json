@@ -8,11 +8,22 @@
   "t_end": 120.0,
   "arrived": 100,
   "arrival_rate": 1.0,
-  "min_separation": 1.0623861906452237,
+  "min_separation": 1.0079493442182739,
   "violating_pairs": 0,
   "violating_pair_ratio": 0.0,
-  "t_all_arrive": 21.3,
-  "mean_path": 30.886587012945846,
-  "std_path": 0.7912514388813907,
-  "first_violation_time": null
+  "t_all_arrive": 33.5,
+  "mean_path": 31.10729096747644,
+  "std_path": 1.2020637331170276,
+  "first_violation_time": null,
+  "uniformity": {
+    "nn_mean": 3.561507268021383,
+    "nn_std": 0.0774443141138201,
+    "nn_cv": 0.02174481428388177,
+    "nn_min": 3.4310625546207287,
+    "nn_max": 3.7397631716258037,
+    "nn_max_over_min": 1.0899723080214139,
+    "d_ideal_hex": 3.8092512274558294,
+    "nn_mean_over_ideal": 0.9349625570377744,
+    "radius_error": 1.7763568394002505e-15
+  }
 }

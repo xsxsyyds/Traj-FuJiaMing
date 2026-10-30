@@ -326,6 +326,70 @@ def fibonacci_sphere(n, radius=1.0):
     return pts * radius
 
 
+def relax_uniform(p, radius, iters=800, step_m=0.04):
+    """球面上的排斥松弛，把点分布压得更均匀（Thomson 型）。
+
+    Fibonacci 只是**准**均匀：有螺旋纹，最近邻距离的离散度约 15%。
+    这里对每对点施加 ~1/d^2 的排斥、投影到切平面、再归一化回球面，
+    反复迭代直到最近邻距离的变异系数收敛。
+
+    这一步直接决定"冲突有多集中"——分布越均匀，对撞带越分散。
+    """
+    p = np.asarray(p, dtype=float).copy()
+    n = len(p)
+    if n < 3:
+        return p
+
+    for it in range(iters):
+        diff = p[:, None, :] - p[None, :, :]
+        d = np.linalg.norm(diff, axis=2)
+        np.fill_diagonal(d, np.inf)
+        # 1/d^2 排斥；截断远处，避免全对互相拖拽
+        w = 1.0 / np.maximum(d, 1e-3) ** 2
+        w[d > 4.0 * radius] = 0.0
+        np.fill_diagonal(w, 0.0)
+        unit = diff / np.where(np.isfinite(d), d, 1.0)[..., None]
+        disp = (w[..., None] * unit).sum(axis=1)
+
+        # 投影到切平面
+        nrm = p / radius
+        disp = disp - (disp * nrm).sum(axis=1, keepdims=True) * nrm
+        mag = np.linalg.norm(disp, axis=1)
+        mx = mag.max()
+        if mx < 1e-12:
+            break
+        # 每步最大位移固定为 step_m，收敛后自动变小
+        scale = np.minimum(step_m / mx, 1.0)
+        p = p + disp * scale
+        p = radius * p / np.linalg.norm(p, axis=1, keepdims=True)
+
+    return p
+
+
+def uniform_sphere(n, radius=1.0, iters=800):
+    """先 Fibonacci 播种，再排斥松弛 → 均匀分布。"""
+    return relax_uniform(fibonacci_sphere(n, radius), radius, iters=iters)
+
+
+def nn_stats(p, radius):
+    """最近邻距离统计，用来量化"有多均匀"。"""
+    diff = p[:, None, :] - p[None, :, :]
+    d = np.linalg.norm(diff, axis=2)
+    np.fill_diagonal(d, np.inf)
+    nn = d.min(axis=1)
+    area = 4.0 * np.pi * radius * radius
+    d_ideal = np.sqrt(area / (len(p) * np.sqrt(3.0) / 2.0))   # 六边形密排
+    return dict(
+        nn_mean=float(nn.mean()), nn_std=float(nn.std()),
+        nn_cv=float(nn.std() / nn.mean()),
+        nn_min=float(nn.min()), nn_max=float(nn.max()),
+        nn_max_over_min=float(nn.max() / nn.min()),
+        d_ideal_hex=float(d_ideal),
+        nn_mean_over_ideal=float(nn.mean() / d_ideal),
+        radius_error=float(np.abs(np.linalg.norm(p, axis=1) - radius).max()),
+    )
+
+
 def geodesic_distance(p, q, radius):
     """球面上两点的大圆距离。"""
     c = np.clip(np.dot(p, q) / (radius * radius), -1.0, 1.0)

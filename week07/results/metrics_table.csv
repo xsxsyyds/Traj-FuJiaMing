@@ -1,4 +1,4 @@
 ﻿model,arrived,n,arrival_rate,min_separation_m,violating_pairs,violating_pair_ratio,t_all_arrive_s,mean_path_m,std_path_m,first_violation_s
-orca,100,100,1.000,1.0624,0,0.0000,21.3,30.89,0.79,
-direct,100,100,1.000,0.0225,286,0.0578,15.3,30.60,0.00,0.7
-repulsion,100,100,1.000,0.0669,47,0.0095,21.9,32.08,0.69,1.1
+orca,100,100,1.000,1.0079,0,0.0000,33.5,31.11,1.20,
+direct,100,100,1.000,0.0204,275,0.0556,15.3,30.60,0.00,0.7
+repulsion,100,100,1.000,0.0177,41,0.0083,21.1,31.99,0.57,2.1

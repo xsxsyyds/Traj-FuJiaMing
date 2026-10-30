@@ -1,0 +1,29 @@
+{
+  "model": "orca",
+  "n": 100,
+  "radius": 10.0,
+  "vmax": 2.0,
+  "dt": 0.1,
+  "tau": 5.0,
+  "t_end": 120.0,
+  "arrived": 100,
+  "arrival_rate": 1.0,
+  "min_separation": 0.8523674629798289,
+  "violating_pairs": 30,
+  "violating_pair_ratio": 0.006060606060606061,
+  "t_all_arrive": 22.3,
+  "mean_path": 30.760142684552797,
+  "std_path": 0.7267815817516153,
+  "first_violation_time": 0.8,
+  "uniformity": {
+    "nn_mean": 3.561507268021383,
+    "nn_std": 0.0774443141138201,
+    "nn_cv": 0.02174481428388177,
+    "nn_min": 3.4310625546207287,
+    "nn_max": 3.7397631716258037,
+    "nn_max_over_min": 1.0899723080214139,
+    "d_ideal_hex": 3.8092512274558294,
+    "nn_mean_over_ideal": 0.9349625570377744,
+    "radius_error": 1.7763568394002505e-15
+  }
+}
