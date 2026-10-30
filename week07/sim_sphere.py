@@ -35,6 +35,42 @@ from orca3d import (  # noqa: E402
     uniform_sphere, nn_stats, solve_velocity, region_colors,
 )
 
+
+def cbf_qp_velocity(pos_i, vel_pref, neighbors, safe_distance, vmax,
+                     alpha=2.0):
+    """三维控制屏障函数 QP 的快速投影解。
+
+    对 h_ij=||p_i-p_j||²-D² 使用
+    d h/dt + alpha*h >= 0，得到关于 v_i 的线性约束；
+    在速度球内求最接近期望速度的可行点。只规划速度，不修改位置。
+    """
+    v = np.asarray(vel_pref, dtype=float).copy()
+    nv = np.linalg.norm(v)
+    if nv > vmax:
+        v *= vmax / max(nv, 1e-12)
+    constraints = []
+    D2 = float(safe_distance) ** 2
+    for pos_j, vel_j, _rj, _static in neighbors:
+        r = np.asarray(pos_i) - np.asarray(pos_j)
+        h = float(r @ r - D2)
+        # r·(v_i-v_j) >= -alpha*h/2
+        constraints.append((r, float(r @ vel_j - 0.5 * alpha * h)))
+    for _ in range(8):
+        worst = 0.0
+        for n, b in constraints:
+            gap = b - float(n @ v)
+            if gap > 0.0:
+                nn = float(n @ n)
+                if nn > 1e-12:
+                    v += (gap / nn) * n
+                    worst = max(worst, gap)
+        nv = np.linalg.norm(v)
+        if nv > vmax:
+            v *= vmax / max(nv, 1e-12)
+        if worst <= 1e-7:
+            break
+    return v
+
 # ---- 场景参数 ----
 N_DRONE = 100
 RADIUS = 10.0
@@ -139,6 +175,20 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
                          for j in cand]
                 new_v[i] = solve_velocity(p[i], v[i], pref[i], neigh,
                                           SAFE_RADIUS, vmax, tau, dt, margin)
+        elif model == "cbf":
+            new_v = np.zeros_like(p)
+            diff = p[:, None, :] - p[None, :, :]
+            dist = np.linalg.norm(diff, axis=2)
+            np.fill_diagonal(dist, np.inf)
+            for i in range(n):
+                if arrived[i]:
+                    continue
+                order = np.argsort(dist[i])
+                cand = [j for j in order[:max_neighbors]
+                        if j != i and dist[i, j] < neighbor_dist]
+                neigh = [(p[j], v[j], SAFE_RADIUS, bool(arrived[j])) for j in cand]
+                new_v[i] = cbf_qp_velocity(p[i], pref[i], neigh,
+                                           MIN_SEP + 0.65, vmax, alpha=6.0)
         else:
             raise ValueError(model)
 
@@ -228,7 +278,7 @@ def run(model="orca", n=N_DRONE, radius=RADIUS, vmax=V_MAX, dt=DT, tau=TAU,
 
 
 # ==========================================================================
-MODELS = ["orca", "direct", "repulsion"]
+MODELS = ["cbf", "orca", "direct", "repulsion"]
 
 
 def main():

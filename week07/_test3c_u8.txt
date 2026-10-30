@@ -1,0 +1,25 @@
+绾︽潫鍗婂緞 1.050 m
+ t     d_now   min over tau   ok?
+  0.0   20.000       0.000   VIOLATION
+  0.1   19.600       1.050   OK
+  0.2   19.201       0.011   VIOLATION
+  0.3   18.801       1.050   OK
+  0.4   18.402       0.022   VIOLATION
+  0.6   17.604       0.035   VIOLATION
+  0.8   16.805       0.047   VIOLATION
+  1.0   16.007       0.061   VIOLATION
+  1.2   15.209       0.075   VIOLATION
+  1.4   14.411       0.091   VIOLATION
+  1.6   13.613       0.107   VIOLATION
+  1.7   13.213       1.050   OK
+  1.8   12.815       0.124   VIOLATION
+  2.0   12.018       0.143   VIOLATION
+  2.1   11.618       1.050   OK
+  2.2   11.221       0.163   VIOLATION
+  2.4   10.424       0.184   VIOLATION
+  2.5   10.024       1.050   OK
+  2.6    9.628       0.207   VIOLATION
+  2.8    8.832       0.233   VIOLATION
+  3.0    8.037       0.260   VIOLATION
+鍏ㄧ▼鏈€鍧?min-over-tau = 0.0001 m
+瀹為檯鏈€灏忛棿璺?= 16.456 m锛堢粓鐐瑰锛?

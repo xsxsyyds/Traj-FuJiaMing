@@ -1,0 +1,7 @@
+rc=0 t=44.4s
+璺?orca (20 鏋? R=10, T=60s) ...
+    t= 20.0s  鍒拌揪   0/20  鏈€灏忛棿璺?0.727 m
+    t= 40.0s  鍒拌揪   0/20  鏈€灏忛棿璺?0.653 m
+    t= 60.0s  鍒拌揪   0/20  鏈€灏忛棿璺?0.758 m
+    鍒拌揪 0/20  鏈€灏忛棿璺?0.561 m  杩濊瀵?186  鍏ㄩ儴鍒拌揪 None  骞冲潎璺▼ 85.64 m
+宸插啓鍑?E:\jiaotongjianmo\SYSU-Code-FJM\week07\results\metrics_table_smoke.csv

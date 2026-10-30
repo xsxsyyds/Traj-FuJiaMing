@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-生成 mp4 动画：左 ORCA，右 Direct（无避让）。
+生成 mp4 动画：左 CBF-QP，右 ORCA。
 
-输出 results/sphere_orca_vs_direct.mp4
+输出 results/sphere_cbf_vs_orca.mp4
 """
 
 from __future__ import annotations
@@ -52,8 +52,8 @@ def style(ax, title):
 
 
 def main():
-    zo = np.load(RESULTS / "traj_orca.npz")
-    zd = np.load(RESULTS / "traj_direct.npz")
+    zo = np.load(RESULTS / "traj_cbf.npz")
+    zd = np.load(RESULTS / "traj_orca.npz")
     traj_o, traj_d = np.asarray(zo["traj"]), np.asarray(zd["traj"])
     arrived_o, arrived_d = np.asarray(zo["arrived"]), np.asarray(zd["arrived"])
     risk_o = np.asarray(zo["collision_count"]) if "collision_count" in zo else np.zeros(To if 'To' in locals() else len(traj_o), dtype=int)
@@ -65,8 +65,8 @@ def main():
     axes = [fig.add_subplot(1, 2, k, projection="3d") for k in (1, 2)]
     for ax in axes:
         draw_sphere(ax)
-    style(axes[0], "ORCA（带避让）")
-    style(axes[1], "Direct（无避让）")
+    style(axes[0], "CBF-QP（安全屏障）")
+    style(axes[1], "ORCA（速度障碍）")
 
     # 颜色由起始球面位置决定，并在整个仿真过程中固定。
     # 方位角决定色相，纬度决定明暗，因此相邻球面区域自然形成渐变。
@@ -89,7 +89,7 @@ def main():
     fig.suptitle("三维球面对趾：100 架无人机（同一起点、同一目标）",
                  fontsize=13, y=0.98)
 
-    out = RESULTS / "sphere_orca_vs_direct.mp4"
+    out = RESULTS / "sphere_cbf_vs_orca.mp4"
     writer = FFMpegWriter(fps=20, bitrate=2800)
     n = max(To, Td)
     with writer.saving(fig, str(out), dpi=150):

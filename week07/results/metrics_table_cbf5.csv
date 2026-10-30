@@ -1,0 +1,2 @@
+﻿model,arrived,n,arrival_rate,min_separation_m,violating_pairs,violating_pair_ratio,t_all_arrive_s,mean_path_m,std_path_m,first_violation_s,collision_event_count,collision_samples,collision_frames,peak_collision_pairs
+cbf,100,100,1.000,0.9676,2,0.0004,28.8,39.98,4.34,11.0,2,6,6,1

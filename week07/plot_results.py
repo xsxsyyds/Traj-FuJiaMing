@@ -33,9 +33,9 @@ plt.rcParams["axes.axisbelow"] = True
 plt.rcParams["axes.edgecolor"] = "#4D4D4D"
 plt.rcParams["font.size"] = 10
 
-MODELS = ["orca", "direct", "repulsion"]
-LABEL = {"orca": "ORCA", "direct": "Direct", "repulsion": "Repulsion"}
-COLOR = {"orca": "#1F4E79", "direct": "#C00000", "repulsion": "#2A9D8F"}
+MODELS = ["cbf", "orca", "direct", "repulsion"]
+LABEL = {"cbf": "CBF-QP", "orca": "ORCA", "direct": "Direct", "repulsion": "Repulsion"}
+COLOR = {"cbf": "#7B2CBF", "orca": "#1F4E79", "direct": "#C00000", "repulsion": "#2A9D8F"}
 RADIUS = 10.0
 
 
@@ -68,9 +68,9 @@ def style3d(ax, title):
 
 # ==========================================================================
 def fig1():
-    fig = plt.figure(figsize=(16.0, 4.9))
+    fig = plt.figure(figsize=(20.0, 4.9))
     for k, m in enumerate(MODELS, start=1):
-        ax = fig.add_subplot(1, 3, k, projection="3d")
+        ax = fig.add_subplot(1, len(MODELS), k, projection="3d")
         draw_sphere(ax)
         z = load(m)
         traj = z["traj"]
@@ -88,7 +88,7 @@ def fig1():
                         wspace=0.0)
     fig.text(0.038, 0.47, "Z [m]", rotation=90, va="center", ha="center",
              fontsize=9)
-    fig.suptitle("三维球面对趾：三个模型的轨迹（灰点 = 起点，彩点 = 终点）",
+    fig.suptitle("三维球面对趾：四个模型的轨迹（灰点 = 起点，彩点 = 终点）",
                  fontsize=13.5, y=0.98)
     fig.savefig(RESULTS / "fig1_trajectories_3d.png")
     plt.close(fig)

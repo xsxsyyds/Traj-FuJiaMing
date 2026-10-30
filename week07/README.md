@@ -1,7 +1,7 @@
 # week07 —— 三维球面 100 机对趾冲突（ORCA）
 
 100 架无人机均匀分布在半径 10 m 的球面上，同时飞向各自的对趾点。
-上层算法用 **ORCA**，对比 Direct（不避让）与 Repulsion（排斥场）。
+主算法用 **CBF-QP**，并与 ORCA、Direct（不避让）和 Repulsion（排斥场）对比。
 
 详细分析见 [`作业.md`](作业.md)。
 
@@ -10,9 +10,9 @@
 | 文件 | 作用 |
 |---|---|
 | `orca3d.py` | 球面 ORCA：切平面 + RVO2 半平面/线性规划 + TTC 邻居预筛 |
-| `sim_sphere.py` | 场景、三个模型、五项指标统计 |
-| `plot_results.py` | 三维轨迹图 / 指标对比 / 最小间隔曲线 |
-| `make_video.py` | mp4 动画（左 ORCA，右 Direct） |
+| `sim_sphere.py` | 场景、四个模型、碰撞风险统计 |
+| `plot_results.py` | 三维轨迹图 / 指标对比 / 风险曲线 |
+| `make_video.py` | 完整 120 s 动画（左 CBF-QP，右 ORCA） |
 
 ## 场景参数
 
@@ -62,15 +62,18 @@
 | `results/fig1_trajectories_3d.png` | 三个模型的三维轨迹 |
 | `results/fig2_metrics.png` | 四项指标柱状对比 |
 | `results/fig3_min_separation.png` | 最小间隔随时间变化 |
-| `results/sphere_orca_vs_direct.mp4` | ORCA vs Direct 动画 |
+| `results/sphere_cbf_vs_orca.mp4` | CBF-QP vs ORCA 完整动画 |
+| `results/sphere_cbf_vs_orca.gif` | 完整动画 GIF 预览 |
+| `results/fig4_collision_metrics.png` | 碰撞风险指标 |
+| `results/fig5_collision_timeline.png` | 碰撞风险时间线 |
 | `results/metrics_table.csv` | 指标原始表 |
 
 ## 复现
 
 ```bash
-python sim_sphere.py        # 三个模型
-python plot_results.py      # 三张 PNG
-python make_video.py        # mp4
+python sim_sphere.py        # CBF-QP / ORCA / Direct / Repulsion
+python plot_results.py      # 五张 PNG
+python make_video.py        # CBF-QP vs ORCA 完整 mp4
 ```
 
 可选参数：`--n 100 --radius 10 --t-end 120 --models orca direct repulsion`，

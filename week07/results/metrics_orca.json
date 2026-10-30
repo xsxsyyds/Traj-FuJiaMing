@@ -14,6 +14,7 @@
   "violating_pairs": 3570,
   "collision_pair_count": 3570,
   "collision_event_count": 3570,
+  "collision_samples": 904406,
   "collision_frames": 1170,
   "peak_collision_pairs": 2511,
   "violating_pair_ratio": 0.7212121212121212,
@@ -32,6 +33,5 @@
     "d_ideal_hex": 3.8092512274558294,
     "nn_mean_over_ideal": 0.9349625570377744,
     "radius_error": 1.7763568394002505e-15
-  },
-  "collision_samples": 904406
+  }
 }
